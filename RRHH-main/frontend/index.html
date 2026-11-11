@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>9-Box Grid — Gestión Humana</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0b0d14;
+  --surface: #12151f;
+  --surface2: #181c2a;
+  --border: rgba(255,255,255,0.07);
+  --text: #dde1ef;
+  --muted: #555d78;
+  --accent: #7c6af7;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Syne', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px;
+  gap: 10px;
+  height: 100vh;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.header-left { display: flex; align-items: center; gap: 10px; }
+.header-left h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; color: #fff; }
+.header-left p { font-size: 0.65rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1px; }
+
+/* empresa logo/badge en header */
+.empresa-badge-img {
+  width: 28px; height: 28px; border-radius: 6px; object-fit: contain;
+  border: 1px solid var(--border); flex-shrink: 0;
+}
+.empresa-badge-initials {
+  width: 28px; height: 28px; border-radius: 6px; background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+
+.header-actions { display: flex; gap: 8px; align-items: center; }
+.filtros { display: flex; gap: 8px; }
+.filtros select { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 5px 10px; border-radius: 6px; font-family: 'Syne', sans-serif; font-size: 0.72rem; cursor: pointer; outline: none; }
+.filtros select:hover { border-color: var(--accent); }
+
+/* user chip */
+.user-chip {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 12px 4px 6px;
+}
+.user-chip-avatar {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); display: flex; align-items: center;
+  justify-content: center; font-size: 0.55rem; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.user-chip-name { font-size: 0.68rem; font-weight: 500; color: var(--text); }
+
+.btn-logout {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--muted); padding: 5px 11px; border-radius: 8px;
+  font-family: 'Syne', sans-serif; font-size: 0.7rem; cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-logout:hover { border-color: rgba(248,113,113,0.4); color: #f87171; }
+.btn-logout svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+.stats-bar { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; flex-shrink: 0; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 7px 8px; display: flex; flex-direction: column; align-items: center; gap: 2px; position: relative; overflow: hidden; cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.1s; }
+.stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--color, var(--muted)); opacity: 0.7; }
+.stat-card:hover { border-color: var(--color, var(--accent)); transform: translateY(-1px); }
+.stat-card.activo { background: color-mix(in srgb, var(--color, var(--accent)) 14%, var(--surface)); border-color: var(--color, var(--accent)); box-shadow: 0 0 0 1px var(--color, var(--accent)) inset; }
+.stat-num { font-size: 1.1rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--color, #fff); line-height: 1; }
+.stat-lbl { font-size: 0.55rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; text-align: center; line-height: 1.2; }
+
+.main-area { display: flex; gap: 12px; flex: 1; min-height: 0; }
+
+.names-panel { width: 160px; flex-shrink: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow-y: auto; padding: 8px 6px; display: flex; flex-direction: column; gap: 4px; }
+.names-panel::-webkit-scrollbar { width: 4px; }
+.names-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.name-item { display: flex; align-items: center; gap: 7px; padding: 4px 6px; border-radius: 6px; cursor: pointer; transition: background 0.15s; }
+.name-item:hover { background: var(--surface2); }
+.name-item.activo { background: rgba(124,106,247,0.15); }
+.name-avatar { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; border: 1.5px solid; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 0.55rem; font-weight: 700; color: #fff; }
+.name-text { font-size: 0.65rem; font-weight: 500; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.name-quad { font-size: 0.55rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+.grid-container { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.grid-with-axes { flex: 1; display: grid; grid-template-columns: 28px 1fr; grid-template-rows: 1fr 20px 16px; min-height: 0; }
+.axis-y-label { grid-column: 1; grid-row: 1; display: flex; align-items: center; justify-content: center; }
+.axis-y-label span { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 0.6rem; font-family: 'JetBrains Mono', monospace; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+.canvas-wrap { grid-column: 2; grid-row: 1; position: relative; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+#grid-svg { width: 100%; height: 100%; display: block; }
+.axis-x-ticks { grid-column: 2; grid-row: 2; display: flex; justify-content: space-between; align-items: flex-start; padding: 3px 0 0 0; }
+.axis-x-ticks span { font-size: 0.58rem; font-family: 'JetBrains Mono', monospace; color: var(--muted); }
+.axis-x-label { grid-column: 2; grid-row: 3; text-align: center; font-size: 0.6rem; font-family: 'JetBrains Mono', monospace; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+.tooltip {
+  position: fixed; background: var(--surface2);
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; width: 210px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.7);
+  pointer-events: none; opacity: 0; transform: translateY(6px) scale(0.96);
+  transition: opacity 0.15s, transform 0.15s; z-index: 9999; overflow: hidden;
+}
+.tooltip.visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.tt-header { display: flex; align-items: center; gap: 10px; padding: 12px 12px 8px; border-bottom: 1px solid var(--border); }
+.tt-avatar { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.1); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; color: #fff; }
+.tt-nombre { font-size: 0.78rem; font-weight: 600; color: #fff; }
+.tt-cargo  { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
+.tt-body   { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+.tt-quad { font-size: 0.67rem; font-weight: 600; padding: 3px 8px; border-radius: 20px; width: fit-content; }
+.score-row { display: flex; flex-direction: column; gap: 3px; }
+.score-lbl { display: flex; justify-content: space-between; font-size: 0.63rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+.score-val { color: var(--text); font-weight: 500; }
+.score-bar { height: 3px; background: rgba(255,255,255,0.07); border-radius: 4px; overflow: hidden; }
+.score-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+
+.stack-popover {
+  position: fixed;
+  background: var(--surface2);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  z-index: 10000;
+  opacity: 0;
+  transform: translateY(8px) scale(0.95);
+  transition: opacity 0.18s, transform 0.18s;
+  pointer-events: none;
+  min-width: 240px;
+  max-width: 360px;
+  width: max-content;
+}
+.stack-popover.visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+
+.sp-header {
+  font-size: 0.6rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding-bottom: 7px;
+  margin-bottom: 7px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sp-badge {
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sp-list { display: flex; flex-direction: column; gap: 5px; }
+
+.sp-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 8px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 0.12s;
+  border: 1px solid transparent;
+}
+.sp-item:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.08); }
+
+.sp-avatar {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid; display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem; font-weight: 700; color: #fff; overflow: hidden;
+}
+.sp-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.sp-nombre { font-size: 0.72rem; font-weight: 600; color: #fff; white-space: normal; line-height: 1.3; }
+.sp-cargo  { font-size: 0.62rem; color: var(--muted); white-space: normal; line-height: 1.3; }
+.sp-quad   { font-size: 0.58rem; font-family: 'JetBrains Mono', monospace; margin-top: 1px; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.btn-dashboard {
+  display: flex; align-items: center; gap: 6px;
+  background: linear-gradient(135deg, rgba(124,106,247,0.2), rgba(124,106,247,0.1));
+  border: 1px solid rgba(124,106,247,0.4);
+  color: #a78bfa; padding: 5px 13px; border-radius: 8px;
+  font-family: 'Syne', sans-serif; font-size: 0.72rem; font-weight: 600;
+  cursor: pointer; text-decoration: none;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  white-space: nowrap;
+}
+.btn-dashboard:hover {
+  background: linear-gradient(135deg, rgba(124,106,247,0.35), rgba(124,106,247,0.2));
+  border-color: rgba(124,106,247,0.7); transform: translateY(-1px);
+}
+.btn-dashboard svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+/* ── PDF BUTTON en tooltip ── */
+.tt-pdf-btn {
+  display:flex; align-items:center; gap:6px; justify-content:center;
+  width:100%; margin-top:4px;
+  background: linear-gradient(135deg,#7c6af7,#6366f1);
+  border:none; color:#fff; padding:7px 12px; border-radius:8px;
+  font-family:'Syne',sans-serif; font-size:0.7rem; font-weight:600;
+  cursor:pointer; transition:opacity 0.2s;
+}
+.tt-pdf-btn:hover { opacity:0.85; }
+.tt-pdf-btn.loading { opacity:0.6; cursor:not-allowed; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div id="empresa-logo-wrap"></div>
+    <div>
+      <h1>9-Box Grid</h1>
+      <p id="empresa-sub">Gestión Humana · Evaluación de Talento</p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <div class="filtros">
+      <select id="filtro-area" onchange="filtrar()"><option value="">Todas las áreas</option></select>
+      <select id="filtro-cargo" onchange="filtrar()"><option value="">Todos los cargos</option></select>
+    </div>
+    <a href="dashboard.html" class="btn-dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <div class="user-chip" id="user-chip">
+      <div class="user-chip-avatar" id="user-avatar">U</div>
+      <span class="user-chip-name" id="user-name">—</span>
+    </div>
+    <button class="btn-logout" onclick="logout()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Salir
+    </button>
+  </div>
+</header>
+
+<div class="stats-bar" id="stats-bar"></div>
+
+<div class="main-area">
+  <div class="names-panel" id="names-panel"></div>
+  <div class="grid-container">
+    <div class="grid-with-axes">
+      <div class="axis-y-label"><span>Potencial</span></div>
+      <div class="canvas-wrap" id="canvas-wrap" onclick="if(event.target===this||event.target.id==='grid-svg'){if(tooltipFijo){tooltipFijo=false;tooltipEl._cc=null;hideTooltip();activeCC=null;refreshHL();}if(stackFijo){stackFijo=false;activeStackKey=null;hideStack();refreshHL();}if(activeQuadrant){activeQuadrant=null;refreshHL();}}">
+        <svg id="grid-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="axis-x-ticks">
+        <span>0</span><span>10</span><span>20</span><span>30</span><span>40</span>
+        <span>50</span><span>60</span><span>70</span><span>80</span><span>90</span><span>100</span>
+      </div>
+      <div class="axis-x-label">Desempeño</div>
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip">
+  <div class="tt-header">
+    <div id="tt-foto-wrap"></div>
+    <div><div class="tt-nombre" id="tt-nombre"></div><div class="tt-cargo" id="tt-cargo"></div></div>
+  </div>
+  <div class="tt-body">
+    <span class="tt-quad" id="tt-quad"></span>
+    <div class="score-row">
+      <div class="score-lbl"><span>Desempeño</span><span class="score-val" id="tt-des"></span></div>
+      <div class="score-bar"><div class="score-fill" id="tt-des-bar" style="background:#34d399"></div></div>
+    </div>
+    <div class="score-row">
+      <div class="score-lbl"><span>Potencial</span><span class="score-val" id="tt-pot"></span></div>
+      <div class="score-bar"><div class="score-fill" id="tt-pot-bar" style="background:#7c6af7"></div></div>
+    </div>
+    <button class="tt-pdf-btn" id="tt-pdf-btn" onclick="descargarPDFIndividual()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Descargar PDF
+    </button>
+  </div>
+</div>
+
+<div class="stack-popover" id="stack-popover">
+  <div class="sp-header">
+    <span class="sp-badge" id="sp-count"></span>
+    <span id="sp-title"></span>
+  </div>
+  <div class="sp-list" id="sp-list"></div>
+</div>
+
+<!-- jsPDF para generación de PDF en el navegador -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- AUTH + CONFIG: SIEMPRE primero -->
+<script src="clients.js"></script>
+<!-- Datos reales de competencias individuales + tips de mejora -->
+<script src="competencias_data.js"></script>
+<!-- Retroalimentación 360 real (feedback de líderes/pares) -->
+<script src="feedback_data.js"></script>
+<!-- Motor de reportes -->
+<script src="reporte_pdf.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════
+   INIT CON AUTH
+   ══════════════════════════════════════════════════════════ */
+
+const DEMO = [
+  {CC:"1093220786", NOMBRE:"YEISON LEANDRO OSORIO AMAYA", CARGO:"LIDER DE INNOVACION Y ASUNTOS REGULATORIOS", AREA:"INNOVACIÓN Y DESARROLLO", PUNTAJE_DESEMPENO:81.9, PUNTAJE_POTENCIAL:80.0, FOTO:""},
+  {CC:"1088289084", NOMBRE:"NATALIA CORREA RIVERA", CARGO:"COORDINADOR DE GESTIÓN HUMANA", AREA:"GESTION HUMANA", PUNTAJE_DESEMPENO:83.9, PUNTAJE_POTENCIAL:95.0, FOTO:""},
+  {CC:"10009572", NOMBRE:"LUIS PHILLIP MEILE PEREZ", CARGO:"GERENTE INNOVACION Y DESARROLLO", AREA:"INNOVACIÓN Y DESARROLLO", PUNTAJE_DESEMPENO:83.6, PUNTAJE_POTENCIAL:75, FOTO:""},
+  {CC:"1088298623", NOMBRE:"STEFANIA GIRALDO BETANCUR", CARGO:"COORDINADOR DE COSTOS E INVENTARIOS", AREA:"COSTOS", PUNTAJE_DESEMPENO:91.7, PUNTAJE_POTENCIAL:90.0, FOTO:""},
+  {CC:"1093215502", NOMBRE:"KATTERINNE GIRALDO SANCHEZ", CARGO:"RECEPCIONISTA", AREA:"GERENCIA ADMINISTRATIVA", PUNTAJE_DESEMPENO:59.9, PUNTAJE_POTENCIAL:50.0, FOTO:""},
+  {CC:"9861482", NOMBRE:"DIEGO ALEJANDRO PEREZ SOSSA", CARGO:"LIDER DE SISTEMAS", AREA:"SISTEMAS", PUNTAJE_DESEMPENO:68.5, PUNTAJE_POTENCIAL:45.0, FOTO:""},
+  {CC:"52324735", NOMBRE:"DIANA PATRICIA CORTES MEDINA", CARGO:"COORDINADOR SISTEMA INTEGRADO DE GESTION", AREA:"SISTEMA DE GESTION INTEGRAL", PUNTAJE_DESEMPENO:83.1, PUNTAJE_POTENCIAL:90.0, FOTO:""},
+  {CC:"42158995", NOMBRE:"DIANA MARCELA CARMONA JARAMILLO", CARGO:"COORDINADORA DE CARTERA Y TESORERIA", AREA:"CARTERA", PUNTAJE_DESEMPENO:85.9, PUNTAJE_POTENCIAL:95.0, FOTO:""},
+  {CC:"42138053", NOMBRE:"ISABEL CRISTINA GIRALDO CEBALLOS", CARGO:"CONTADOR", AREA:"CONTABILIDAD", PUNTAJE_DESEMPENO:68.9, PUNTAJE_POTENCIAL:70.0, FOTO:""},
+  {CC:"1112768345", NOMBRE:"ABEL DE JESUS SALDARRIAGA HERNANDEZ", CARGO:"JEFE DE SUPPLY CHAIN", AREA:"BODEGA LOGISTICA", PUNTAJE_DESEMPENO:86.0, PUNTAJE_POTENCIAL:100, FOTO:""},
+  {CC:"1053844705", NOMBRE:"CRISTIAN CAMILO ARBOLEDA MORALES", CARGO:"ANALISTA CONTABLE, FINANCIERO Y DE TESORERIA", AREA:"CONTABILIDAD Y CARTERA", PUNTAJE_DESEMPENO:82.2, PUNTAJE_POTENCIAL:90.0, FOTO:""},
+  {CC:"1088322544", NOMBRE:"JULIANA PEÑA GOMEZ", CARGO:"LIDER CONTROL DE CALIDAD E INOCUIDAD", AREA:"SISTEMA DE GESTION INTEGRAL", PUNTAJE_DESEMPENO:64.9, PUNTAJE_POTENCIAL:60.0, FOTO:""},
+  {CC:"1088017664", NOMBRE:"STTEFANIA RAMIREZ OSPINA", CARGO:"ANALISTA SISTEMA INTEGRADO DE GESTION", AREA:"SISTEMA DE GESTION INTEGRAL", PUNTAJE_DESEMPENO:76.8, PUNTAJE_POTENCIAL:60.0, FOTO:""},
+  {CC:"1093226801", NOMBRE:"DANIELA VALENCIA CASTRILLON", CARGO:"LIDER CONTROL DE CALIDAD E INOCUIDAD", AREA:"SISTEMA DE GESTION INTEGRAL", PUNTAJE_DESEMPENO:74.3, PUNTAJE_POTENCIAL:55.0, FOTO:""},
+  {CC:"1116250554", NOMBRE:"MARIA ALEJANDRA LOPEZ YUSTY", CARGO:"LIDER DE SEGURIDAD Y SALUD EN EL TRABAJO", AREA:"SISTEMA DE GESTION INTEGRAL", PUNTAJE_DESEMPENO:79.7, PUNTAJE_POTENCIAL:65.0, FOTO:""},
+  {CC:"1088034142", NOMBRE:"ISLENY MARCELA MORALES IBAÑEZ", CARGO:"ANALISTA DE GESTIÓN AMBIENTAL", AREA:"INNOVACIÓN Y DESARROLLO", PUNTAJE_DESEMPENO:76.0, PUNTAJE_POTENCIAL:60.0, FOTO:""},
+  {CC:"1088243613", NOMBRE:"LINA MARCELA NARANJO LOPEZ", CARGO:"GERENTE DE EXPORTACIONES INDUSTRIAL E INSTITUCIONAL", AREA:"GERENCIA COMERCIAL", PUNTAJE_DESEMPENO:79.0, PUNTAJE_POTENCIAL:50, FOTO:""},
+  {CC:"1116435674", NOMBRE:"GREISY DANIELA RAMIREZ VILLA", CARGO:"PROJECT MANAGEMENT OFFICE", AREA:"COMERCIAL", PUNTAJE_DESEMPENO:70.4, PUNTAJE_POTENCIAL:45.0, FOTO:""},
+  {CC:"1088026517", NOMBRE:"LUISA MARIA SOLORZANO GONZALEZ", CARGO:"LIDER ADMINISTRATIVA DE VENTAS", AREA:"COMERCIAL", PUNTAJE_DESEMPENO:76.4, PUNTAJE_POTENCIAL:60.0, FOTO:""},
+  {CC:"1087996602", NOMBRE:"IVAN FELIPE SANCHEZ SERNA", CARGO:"COORDINADOR TECNICO OPERATIVO DE MANTENIMIENTO", AREA:"MANTENIMIENTO", PUNTAJE_DESEMPENO:72.4, PUNTAJE_POTENCIAL:80.0, FOTO:""},
+  {CC:"1088018746", NOMBRE:"JORGE EDUARDO ARBOLEDA TORO", CARGO:"PLANEADOR DE MANTENIMIENTO", AREA:"MANTENIMIENTO", PUNTAJE_DESEMPENO:85.4, PUNTAJE_POTENCIAL:60.0, FOTO:""},
+  {CC:"1087992783", NOMBRE:"LUZ MARYURY ARIAS HERNANDEZ", CARGO:"ANALISTA DE DESARROLLO ORGANIZACIONAL", AREA:"GESTION HUMANA", PUNTAJE_DESEMPENO:81.0, PUNTAJE_POTENCIAL:60.0, FOTO:""},
+  {CC:"1225090447", NOMBRE:"LUISA FERNANDA RESTREPO OSORIO", CARGO:"ANALISTA DE DESARROLLO ORGANIZACIONAL", AREA:"GESTION HUMANA", PUNTAJE_DESEMPENO:95.0, PUNTAJE_POTENCIAL:65.0, FOTO:""},
+  {CC:"1088017293", NOMBRE:"LINA KATERINE QUINTERO RODRIGUEZ", CARGO:"ANALISTA DE GESTION HUMANA", AREA:"GESTION HUMANA", PUNTAJE_DESEMPENO:74.2, PUNTAJE_POTENCIAL:50, FOTO:""},
+  {CC:"1142514381", NOMBRE:"MARIA FERNANDA ARBOLEDA ARISTIZABAL", CARGO:"AUXILIAR GESTION HUMANA", AREA:"GESTION HUMANA", PUNTAJE_DESEMPENO:86.8, PUNTAJE_POTENCIAL:50.0, FOTO:""},
+  {CC:"1088030537", NOMBRE:"ERIKA ALEJANDRA MAGON CORTES", CARGO:"LIDER DE COSTOS E INVENTARIOS", AREA:"COSTOS", PUNTAJE_DESEMPENO:88.5, PUNTAJE_POTENCIAL:80.0, FOTO:""},
+  {CC:"1225090423", NOMBRE:"JUAN DIEGO ESPINAL GUTIERREZ", CARGO:"ANALISTA DE COSTOS E INVENTARIOS", AREA:"COSTOS", PUNTAJE_DESEMPENO:82.5, PUNTAJE_POTENCIAL:50, FOTO:""},
+  {CC:"1022364885", NOMBRE:"RYANN ROBERTO GOMEZ CARDOZO", CARGO:"JEFE DE MANTENIMIENTO", AREA:"MANTENIMIENTO", PUNTAJE_DESEMPENO:59.4, PUNTAJE_POTENCIAL:40, FOTO:""},
+  {CC:"1054994231", NOMBRE:"JUAN DAVID VALENCIA SEPULVEDA", CARGO:"JEFE DE MANTENIMIENTO", AREA:"MANTENIMIENTO", PUNTAJE_DESEMPENO:74.4, PUNTAJE_POTENCIAL:70.0, FOTO:""},
+  {CC:"1088296909", NOMBRE:"MAURICIO MEJIA RENGIFO", CARGO:"ANALISTA DE TRANSPORTE", AREA:"BODEGA LOGISTICA", PUNTAJE_DESEMPENO:84.4, PUNTAJE_POTENCIAL:40, FOTO:""},
+  {CC:"1088329563", NOMBRE:"JORGE IVAN MORALES MORALES", CARGO:"ANALISTA DE FACTURACIÓN", AREA:"BODEGA LOGISTICA", PUNTAJE_DESEMPENO:91.9, PUNTAJE_POTENCIAL:85.0, FOTO:""},
+  {CC:"1088252723", NOMBRE:"NILLIRET ECHEVERRY RESTREPO", CARGO:"LIDER DE COMPRAS Y LOGISTICA", AREA:"BODEGA LOGISTICA", PUNTAJE_DESEMPENO:88.9, PUNTAJE_POTENCIAL:95.0, FOTO:""},
+  {CC:"1088282715", NOMBRE:"FRANCY JULIETH VALENCIA PASAJE", CARGO:"LÍDER DE COMERCIO EXTERIOR", AREA:"COMERCIO", PUNTAJE_DESEMPENO:87.1, PUNTAJE_POTENCIAL:50.0, FOTO:""},
+  {CC:"1088305746", NOMBRE:"MARIA CRISTINA HINCAPIE TAPASCO", CARGO:"AUXILIAR LOGISTICO Y DE COMPRAS", AREA:"BODEGA LOGISTICA", PUNTAJE_DESEMPENO:86.4, PUNTAJE_POTENCIAL:55, FOTO:""},
+  {CC:"1088025460", NOMBRE:"YALENI GARCIA ARIAS", CARGO:"ANALISTA SE SEGURIDAD Y SALUD EN EL TRABAJO", AREA:"SISTEMA DE GESTION INTEGRAL", PUNTAJE_DESEMPENO:93.2, PUNTAJE_POTENCIAL:85.0, FOTO:""},
+  {CC:"1088339487", NOMBRE:"DANIELA LOPEZ DAVILA", CARGO:"AUXILIAR DE SEGURDAD Y SALUD EN EL TRABAJO", AREA:"SISTEMA DE GESTION INTEGRAL", PUNTAJE_DESEMPENO:96.4, PUNTAJE_POTENCIAL:65.0, FOTO:""},
+  {CC:"1093213628", NOMBRE:"NATALIA HERRERA ROJAS", CARGO:"AUXILIAR DE SEGURDAD Y SALUD EN EL TRABAJO", AREA:"SISTEMA DE GESTION INTEGRAL", PUNTAJE_DESEMPENO:81.7, PUNTAJE_POTENCIAL:95.0, FOTO:""},
+  {CC:"1088029471", NOMBRE:"MARIA PAULINA BOLAÑO RAMIREZ", CARGO:"ANALISTA SE SEGURIDAD Y SALUD EN EL TRABAJO", AREA:"SISTEMA DE GESTION INTEGRAL", PUNTAJE_DESEMPENO:93.8, PUNTAJE_POTENCIAL:80.0, FOTO:""},
+];
+
+const QUADRANT_META = [
+  { nombre:"Enigma",         color:"#e879f9", r:0, c:0 },
+  { nombre:"Potencial Alto", color:"#34d399", r:0, c:1 },
+  { nombre:"Estrella",       color:"#818cf8", r:0, c:2 },
+  { nombre:"Dilema",         color:"#f87171", r:1, c:0 },
+  { nombre:"Core",           color:"#94a3b8", r:1, c:1 },
+  { nombre:"Pilar",          color:"#fbbf24", r:1, c:2 },
+  { nombre:"En Riesgo",      color:"#ef4444", r:2, c:0 },
+  { nombre:"Bajo Desempeño", color:"#f97316", r:2, c:1 },
+  { nombre:"Experto",        color:"#fb923c", r:2, c:2 },
+];
+
+const COLORES_DOT = [
+  "#818cf8","#34d399","#fbbf24","#f87171","#e879f9",
+  "#38bdf8","#fb923c","#a3e635","#f472b6","#2dd4bf",
+  "#facc15","#4ade80","#fb7185","#c084fc","#60a5fa",
+  "#a78bfa","#6ee7b7","#fde68a","#fca5a5","#f0abfc",
+];
+
+let todosEmpleados     = [];
+let empleadosFiltrados = [];
+let colorMap           = {};
+let activeCC           = null;
+let activeStackKey     = null;
+let activeQuadrant     = null;
+
+const tooltipEl      = document.getElementById("tooltip");
+const stackPopoverEl = document.getElementById("stack-popover");
+let tooltipFijo = false;
+let stackFijo   = false;
+
+function clasificar(des, pot) {
+  const col  = des >= 67 ? 2 : des >= 34 ? 1 : 0;
+  const fila = pot >= 67 ? 0 : pot >= 34 ? 1 : 2;
+  return QUADRANT_META.find(q => q.r === fila && q.c === col);
+}
+function iniciales(n) { return (n||"?").split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase(); }
+function scoreKey(emp) { return `${emp.PUNTAJE_DESEMPENO}_${emp.PUNTAJE_POTENCIAL}`; }
+function groupByScore(list) {
+  const map = {};
+  list.forEach(e => { const k=scoreKey(e); if(!map[k]) map[k]=[]; map[k].push(e); });
+  return map;
+}
+function posEl(el, evOrRect, w, h) {
+  const clientX = evOrRect.clientX ?? evOrRect.left;
+  const clientY = evOrRect.clientY ?? evOrRect.top;
+  let x = clientX + 16, y = clientY - 16;
+  if (x + w > window.innerWidth  - 8) x = clientX - w - 16;
+  if (y + h > window.innerHeight - 8) y = clientY - h;
+  if (y < 8) y = 8;
+  el.style.left = x + "px";
+  el.style.top  = y + "px";
+}
+
+function posNearDot(el, svgCX, svgCY, R, svgRect, svgW, svgH) {
+  const scaleX  = svgRect.width  / svgW;
+  const scaleY  = svgRect.height / svgH;
+  const screenX = svgRect.left + svgCX * scaleX;
+  const screenY = svgRect.top  + svgCY * scaleY;
+  const dotR    = R * scaleX;
+  const isStack = el === stackPopoverEl;
+  const elW = isStack ? 280 : 218;
+  const elH = isStack ? 200 : 195;
+  const gap = 12;
+  let x = screenX + dotR + gap;
+  let y = screenY - elH / 2;
+  if (x + elW > window.innerWidth - 8) x = screenX - dotR - elW - gap;
+  if (y < 8) y = 8;
+  if (y + elH > window.innerHeight - 8) y = window.innerHeight - elH - 8;
+  el.style.left = x + "px";
+  el.style.top  = y + "px";
+}
+
+function buildStats(list) {
+  const bar = document.getElementById("stats-bar");
+  bar.innerHTML = "";
+  QUADRANT_META.forEach(qm => {
+    const count = list.filter(e => clasificar(e.PUNTAJE_DESEMPENO, e.PUNTAJE_POTENCIAL).nombre === qm.nombre).length;
+    const card = document.createElement("div");
+    card.className = "stat-card";
+    card.dataset.quad = qm.nombre;
+    card.style.setProperty("--color", qm.color);
+    card.innerHTML = `<div class="stat-num">${count}</div><div class="stat-lbl">${qm.nombre}</div>`;
+    card.addEventListener("click", e => { e.stopPropagation(); toggleQuadrant(qm.nombre); });
+    bar.appendChild(card);
+  });
+  if (activeQuadrant) {
+    const match = [...bar.children].find(c => c.dataset.quad === activeQuadrant);
+    if (match) match.classList.add("activo"); else activeQuadrant = null;
+  }
+}
+
+function buildNames(list) {
+  const panel = document.getElementById("names-panel");
+  panel.innerHTML = "";
+  list.forEach(emp => {
+    const qm    = clasificar(emp.PUNTAJE_DESEMPENO, emp.PUNTAJE_POTENCIAL);
+    const color = colorMap[emp.CC];
+    const item  = document.createElement("div");
+    item.className = "name-item"; item.id = "ni-" + emp.CC;
+    item.addEventListener("click", (e) => handleNameClick(emp, e));
+    const av = document.createElement("div");
+    av.className = "name-avatar"; av.style.borderColor = color;
+    if (emp.FOTO) { av.innerHTML = `<img src="${emp.FOTO}" style="width:100%;height:100%;object-fit:cover"/>`; }
+    else { av.style.background = color; av.textContent = iniciales(emp.NOMBRE); }
+    const txt = document.createElement("div");
+    txt.innerHTML = `<div class="name-text">${emp.NOMBRE.split(" ").slice(0,2).join(" ")}</div><div class="name-quad" style="color:${qm.color}">${qm.nombre}</div>`;
+    item.appendChild(av); item.appendChild(txt);
+    panel.appendChild(item);
+  });
+}
+
+function buildGrid(list, selectedCCs) {
+  const svg  = document.getElementById("grid-svg");
+  const wrap = document.getElementById("canvas-wrap");
+  const W    = wrap.clientWidth  || 600;
+  const H    = wrap.clientHeight || 400;
+  const ns   = "http://www.w3.org/2000/svg";
+
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.innerHTML = "";
+
+  let _hoverCC = null;
+  let _hoverKey2 = null;
+  svg.addEventListener("mousemove", e => {
+    if (tooltipFijo || stackFijo) return;
+    const rect = svg.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    const scaleY = H / rect.height;
+    const mx = (e.clientX - rect.left) * scaleX;
+    const my = (e.clientY - rect.top)  * scaleY;
+    let best = null, bestDist = Infinity;
+    svg.querySelectorAll("[data-hit]").forEach(el => {
+      const dx = mx - el._cx, dy = my - el._cy;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < el._R + 8 && dist < bestDist) { bestDist = dist; best = el; }
+    });
+    if (best) {
+      if (best._hoverType === "single") {
+        if (_hoverCC !== best._hoverEmp.CC) {
+          _hoverCC = best._hoverEmp.CC; _hoverKey2 = null;
+          fillTooltip(best._hoverEmp, best._hoverColor);
+          posNearDot(tooltipEl, best._cx, best._cy, best._R, rect, W, H);
+          tooltipEl.classList.add("visible");
+          hideStack();
+        }
+      } else {
+        if (_hoverKey2 !== best._hoverKey) {
+          _hoverKey2 = best._hoverKey; _hoverCC = null;
+          fillStack(best._hoverGroup, best._hoverKey, best._cx, best._cy, best._R);
+          posNearDot(stackPopoverEl, best._cx, best._cy, best._R, rect, W, H);
+          stackPopoverEl.classList.add("visible");
+          hideTooltip();
+        }
+      }
+    } else {
+      if (_hoverCC || _hoverKey2) { _hoverCC = null; _hoverKey2 = null; hideTooltip(); hideStack(); }
+    }
+  });
+  svg.addEventListener("mouseleave", () => {
+    if (!tooltipFijo) hideTooltip();
+    if (!stackFijo)   hideStack();
+    _hoverCC = null; _hoverKey2 = null;
+  });
+
+  const quadBg = [
+    ["#261535","#162038","#151e3a"],
+    ["#2a1e1e","#1a1a1a","#1e2a12"],
+    ["#321010","#231810","#122010"],
+  ];
+  const bgHit = document.createElementNS(ns,"rect");
+  bgHit.setAttribute("x",0); bgHit.setAttribute("y",0);
+  bgHit.setAttribute("width",W); bgHit.setAttribute("height",H);
+  bgHit.setAttribute("fill","transparent");
+  bgHit.addEventListener("click", e => {
+    e.stopPropagation();
+    const hadSelection = tooltipFijo || stackFijo || activeCC || activeStackKey || activeQuadrant;
+    tooltipFijo=false; tooltipEl._cc=null; hideTooltip();
+    stackFijo=false; activeStackKey=null; hideStack();
+    activeCC=null; activeQuadrant=null;
+    if (hadSelection) refreshHL();
+  });
+  svg.appendChild(bgHit);
+
+  for (let r=0; r<3; r++) for (let c=0; c<3; c++) {
+    const qm = QUADRANT_META.find(q=>q.r===r&&q.c===c);
+    const x=(c/3)*W, y=(r/3)*H;
+    const rect = document.createElementNS(ns,"rect");
+    rect.setAttribute("x",x); rect.setAttribute("y",y);
+    rect.setAttribute("width",W/3); rect.setAttribute("height",H/3);
+    rect.setAttribute("fill",quadBg[r][c]); svg.appendChild(rect);
+    const lt = document.createElementNS(ns,"text");
+    lt.setAttribute("x",x+(W/3)/2); lt.setAttribute("y",y+(H/3)-8);
+    lt.setAttribute("text-anchor","middle"); lt.setAttribute("fill",qm.color);
+    lt.setAttribute("opacity","0.55"); lt.setAttribute("font-size","13");
+    lt.setAttribute("font-family","Syne,sans-serif"); lt.setAttribute("font-weight","700");
+    lt.setAttribute("pointer-events","none"); lt.textContent=qm.nombre;
+    svg.appendChild(lt);
+  }
+
+  const mkLine = (x1,y1,x2,y2,stroke,w) => {
+    const l=document.createElementNS(ns,"line");
+    l.setAttribute("x1",x1);l.setAttribute("y1",y1);
+    l.setAttribute("x2",x2);l.setAttribute("y2",y2);
+    l.setAttribute("stroke",stroke);l.setAttribute("stroke-width",w);
+    svg.appendChild(l);
+  };
+  [1/3,2/3].forEach(f => { mkLine(f*W,0,f*W,H,"rgba(255,255,255,0.22)","1.5"); mkLine(0,f*H,W,f*H,"rgba(255,255,255,0.22)","1.5"); });
+  for (let v=10;v<100;v+=10) { const px=(v/100)*W,py=(1-v/100)*H; mkLine(px,0,px,H,"rgba(255,255,255,0.025)","0.5"); mkLine(0,py,W,py,"rgba(255,255,255,0.025)","0.5"); }
+
+  [0,25,50,75,100].forEach(v => {
+    const t=document.createElementNS(ns,"text");
+    t.setAttribute("x",4); t.setAttribute("y",(1-v/100)*H-2);
+    t.setAttribute("fill","rgba(255,255,255,0.2)"); t.setAttribute("font-size","8");
+    t.setAttribute("font-family","JetBrains Mono,monospace"); t.textContent=v;
+    svg.appendChild(t);
+  });
+
+  const R = Math.max(14, Math.min(W,H)*0.038);
+  const groups = groupByScore(list);
+  const PAD = R + 6;
+  const toX = v => Math.max(PAD, Math.min(W - PAD, (v/100)*W));
+  const toY = v => Math.max(PAD, Math.min(H - PAD, (1-v/100)*H));
+
+  Object.entries(groups).forEach(([key, group]) => {
+    const cx = toX(group[0].PUNTAJE_DESEMPENO);
+    const cy = toY(group[0].PUNTAJE_POTENCIAL);
+    const individualSelected = selectedCCs && selectedCCs.size === 1 && !activeStackKey;
+    const activeInGroup = group.find(e => selectedCCs && selectedCCs.has(e.CC));
+    const isActive = activeStackKey===key || !!activeInGroup;
+    if (individualSelected && activeInGroup) {
+      drawSingle(svg,ns,cx,cy,R,activeInGroup,colorMap[activeInGroup.CC],true,false);
+      return;
+    }
+    const isDimmed = selectedCCs && selectedCCs.size > 0 && !isActive;
+    if (group.length > 1) drawStack(svg,ns,cx,cy,R,group,key,isActive,isDimmed);
+    else drawSingle(svg,ns,cx,cy,R,group[0],colorMap[group[0].CC],isActive,isDimmed);
+  });
+}
+
+function drawSingle(svg,ns,cx,cy,R,emp,color,isActive,isDimmed=false) {
+  const clipId = "c-"+emp.CC;
+  if (isActive) {
+    const ring=document.createElementNS(ns,"circle");
+    ring.setAttribute("cx",cx); ring.setAttribute("cy",cy);
+    ring.setAttribute("r",R+5); ring.setAttribute("fill","none");
+    ring.setAttribute("stroke",color); ring.setAttribute("stroke-width","2.5");
+    ring.setAttribute("opacity","0.8"); svg.appendChild(ring);
+  }
+  const cp=document.createElementNS(ns,"clipPath"); cp.setAttribute("id",clipId);
+  const cr=document.createElementNS(ns,"circle"); cr.setAttribute("cx",cx); cr.setAttribute("cy",cy); cr.setAttribute("r",R);
+  cp.appendChild(cr); svg.appendChild(cp);
+  const g=document.createElementNS(ns,"g");
+  if (isDimmed) { g.setAttribute("opacity","0.18"); g.setAttribute("filter","grayscale(1)"); }
+  svg.appendChild(g);
+  const bg=document.createElementNS(ns,"circle");
+  bg.setAttribute("cx",cx); bg.setAttribute("cy",cy); bg.setAttribute("r",R);
+  bg.setAttribute("fill",color); bg.setAttribute("opacity","0.85"); g.appendChild(bg);
+  if (emp.FOTO) {
+    const img=document.createElementNS(ns,"image");
+    img.setAttribute("x",cx-R); img.setAttribute("y",cy-R);
+    img.setAttribute("width",R*2); img.setAttribute("height",R*2);
+    img.setAttribute("href",emp.FOTO); img.setAttribute("clip-path",`url(#${clipId})`);
+    img.setAttribute("preserveAspectRatio","xMidYMid slice"); g.appendChild(img);
+  } else {
+    const t=document.createElementNS(ns,"text");
+    t.setAttribute("x",cx); t.setAttribute("y",cy+1);
+    t.setAttribute("text-anchor","middle"); t.setAttribute("dominant-baseline","middle");
+    t.setAttribute("fill","#fff"); t.setAttribute("font-size",Math.max(8,R*0.52));
+    t.setAttribute("font-family","Syne,sans-serif"); t.setAttribute("font-weight","700");
+    t.setAttribute("pointer-events","none"); t.setAttribute("clip-path",`url(#${clipId})`);
+    t.textContent=iniciales(emp.NOMBRE); g.appendChild(t);
+  }
+  const brd=document.createElementNS(ns,"circle");
+  brd.setAttribute("cx",cx); brd.setAttribute("cy",cy); brd.setAttribute("r",R);
+  brd.setAttribute("fill","none"); brd.setAttribute("stroke","rgba(255,255,255,0.22)");
+  brd.setAttribute("stroke-width","1.5"); brd.setAttribute("pointer-events","none"); g.appendChild(brd);
+  const hit=document.createElementNS(ns,"circle");
+  hit.setAttribute("cx",cx); hit.setAttribute("cy",cy); hit.setAttribute("r",R+4);
+  hit.setAttribute("fill","transparent");
+  hit.setAttribute("data-hit","1");
+  hit.setAttribute("cursor", isDimmed ? "default" : "pointer");
+  if (isDimmed) hit.setAttribute("pointer-events","none");
+  hit.addEventListener("click",e=>{ e.stopPropagation(); toggleTooltip(e,emp,color,cx,cy,R); });
+  hit._hoverType = "single"; hit._hoverEmp = emp; hit._hoverColor = color;
+  hit._cx = cx; hit._cy = cy; hit._R = R;
+  svg.appendChild(hit);
+}
+
+function drawStack(svg,ns,cx,cy,R,group,key,isActive,isDimmed=false) {
+  const n    = group.length;
+  const off  = Math.min(6, R*0.3);
+  const show = Math.min(n, 3);
+  if (isActive) {
+    const ring=document.createElementNS(ns,"circle");
+    ring.setAttribute("cx",cx); ring.setAttribute("cy",cy);
+    ring.setAttribute("r",R+(show-1)*off+6); ring.setAttribute("fill","none");
+    ring.setAttribute("stroke","rgba(255,255,255,0.3)"); ring.setAttribute("stroke-width","2");
+    svg.appendChild(ring);
+  }
+  const sg=document.createElementNS(ns,"g");
+  if (isDimmed) { sg.setAttribute("opacity","0.18"); sg.setAttribute("filter","grayscale(1)"); }
+  svg.appendChild(sg);
+  for (let i=show-1; i>=0; i--) {
+    const emp   = group[i];
+    const color = colorMap[emp.CC];
+    const pcx   = cx + i*off*0.6;
+    const pcy   = cy - i*off*0.6;
+    const clipId= "cs-"+emp.CC;
+    const sh=document.createElementNS(ns,"circle");
+    sh.setAttribute("cx",pcx+1.5); sh.setAttribute("cy",pcy+1.5);
+    sh.setAttribute("r",R+1); sh.setAttribute("fill","rgba(0,0,0,0.5)");
+    sh.setAttribute("pointer-events","none"); sg.appendChild(sh);
+    const cp=document.createElementNS(ns,"clipPath"); cp.setAttribute("id",clipId);
+    const cr=document.createElementNS(ns,"circle"); cr.setAttribute("cx",pcx); cr.setAttribute("cy",pcy); cr.setAttribute("r",R);
+    cp.appendChild(cr); sg.appendChild(cp);
+    const bg=document.createElementNS(ns,"circle");
+    bg.setAttribute("cx",pcx); bg.setAttribute("cy",pcy); bg.setAttribute("r",R);
+    bg.setAttribute("fill",color); bg.setAttribute("opacity","0.88"); sg.appendChild(bg);
+    if (emp.FOTO) {
+      const img=document.createElementNS(ns,"image");
+      img.setAttribute("x",pcx-R); img.setAttribute("y",pcy-R);
+      img.setAttribute("width",R*2); img.setAttribute("height",R*2);
+      img.setAttribute("href",emp.FOTO); img.setAttribute("clip-path",`url(#${clipId})`);
+      img.setAttribute("preserveAspectRatio","xMidYMid slice"); sg.appendChild(img);
+    } else {
+      const t=document.createElementNS(ns,"text");
+      t.setAttribute("x",pcx); t.setAttribute("y",pcy+1);
+      t.setAttribute("text-anchor","middle"); t.setAttribute("dominant-baseline","middle");
+      t.setAttribute("fill","#fff"); t.setAttribute("font-size",Math.max(8,R*0.52));
+      t.setAttribute("font-family","Syne,sans-serif"); t.setAttribute("font-weight","700");
+      t.setAttribute("pointer-events","none"); t.setAttribute("clip-path",`url(#${clipId})`);
+      t.textContent=iniciales(emp.NOMBRE); sg.appendChild(t);
+    }
+    const brd=document.createElementNS(ns,"circle");
+    brd.setAttribute("cx",pcx); brd.setAttribute("cy",pcy); brd.setAttribute("r",R);
+    brd.setAttribute("fill","none"); brd.setAttribute("stroke","rgba(0,0,0,0.5)");
+    brd.setAttribute("stroke-width","2"); brd.setAttribute("pointer-events","none"); sg.appendChild(brd);
+  }
+  const topCX = cx + (show-1)*off*0.6;
+  const topCY = cy - (show-1)*off*0.6;
+  const badgeR = Math.max(9, R*0.38);
+  const bx = topCX + R*0.68, by = topCY - R*0.68;
+  const badgeBg=document.createElementNS(ns,"circle");
+  badgeBg.setAttribute("cx",bx); badgeBg.setAttribute("cy",by);
+  badgeBg.setAttribute("r",badgeR); badgeBg.setAttribute("fill","#0b0d14");
+  badgeBg.setAttribute("stroke","rgba(255,255,255,0.25)"); badgeBg.setAttribute("stroke-width","1.5");
+  badgeBg.setAttribute("pointer-events","none"); sg.appendChild(badgeBg);
+  const badgeTxt=document.createElementNS(ns,"text");
+  badgeTxt.setAttribute("x",bx); badgeTxt.setAttribute("y",by+0.5);
+  badgeTxt.setAttribute("text-anchor","middle"); badgeTxt.setAttribute("dominant-baseline","middle");
+  badgeTxt.setAttribute("fill","#fff"); badgeTxt.setAttribute("font-size",Math.max(7,badgeR*0.9));
+  badgeTxt.setAttribute("font-family","Syne,sans-serif"); badgeTxt.setAttribute("font-weight","700");
+  badgeTxt.setAttribute("pointer-events","none"); badgeTxt.textContent=n; sg.appendChild(badgeTxt);
+  const hitX = cx - R - 4, hitY = topCY - R - 4;
+  const hitW = R*2 + (show-1)*off*0.6 + 8, hitH = R*2 + (show-1)*off*0.6 + 8;
+  const hit=document.createElementNS(ns,"rect");
+  hit.setAttribute("x",hitX); hit.setAttribute("y",hitY);
+  hit.setAttribute("width",hitW); hit.setAttribute("height",hitH);
+  hit.setAttribute("fill","transparent");
+  hit.setAttribute("cursor", isDimmed ? "default" : "pointer");
+  if (isDimmed) hit.setAttribute("pointer-events","none");
+  hit.addEventListener("click",e=>{ e.stopPropagation(); toggleStack(e,group,key,cx,cy,R); });
+  hit._hoverType = "stack"; hit._hoverGroup = group; hit._hoverKey = key;
+  hit._cx = cx; hit._cy = cy; hit._R = R;
+  svg.appendChild(hit);
+}
+
+function showTooltip(e,emp,color) { fillTooltip(emp,color); posEl(tooltipEl,e,210,190); tooltipEl.classList.add("visible"); }
+function hideTooltip() { tooltipEl.classList.remove("visible"); }
+function toggleTooltip(e,emp,color,dotCX,dotCY,dotR) {
+  if (tooltipFijo && tooltipEl._cc===emp.CC) { tooltipFijo=false; tooltipEl._cc=null; hideTooltip(); activeCC=null; refreshHL(); return; }
+  tooltipFijo=true; tooltipEl._cc=emp.CC; activeCC=emp.CC; activeStackKey=null; activeQuadrant=null;
+  fillTooltip(emp,color);
+  const svgRect=document.getElementById("grid-svg").getBoundingClientRect();
+  const svgW=parseFloat(document.getElementById("grid-svg").getAttribute("viewBox").split(" ")[2]);
+  const svgH=parseFloat(document.getElementById("grid-svg").getAttribute("viewBox").split(" ")[3]);
+  posNearDot(tooltipEl, dotCX, dotCY, dotR, svgRect, svgW, svgH);
+  tooltipEl.classList.add("visible"); refreshHL();
+}
+function fillTooltip(emp,color) {
+  const des=Math.round(emp.PUNTAJE_DESEMPENO), pot=Math.round(emp.PUNTAJE_POTENCIAL);
+  const qm=clasificar(des,pot);
+  const desEscala4 = (emp.PUNTAJE_DESEMPENO/25).toFixed(2);
+  const potEscala4 = (emp.PUNTAJE_POTENCIAL/25).toFixed(2);
+  const wrap=document.getElementById("tt-foto-wrap");
+  if(emp.FOTO) wrap.innerHTML=`<div class="tt-avatar" style="border:2px solid ${color};padding:0"><img src="${emp.FOTO}" style="width:100%;height:100%;object-fit:cover"/></div>`;
+  else wrap.innerHTML=`<div class="tt-avatar" style="background:${color}">${iniciales(emp.NOMBRE)}</div>`;
+  document.getElementById("tt-nombre").textContent=emp.NOMBRE;
+  document.getElementById("tt-cargo").textContent=emp.CARGO||"—";
+  const qq=document.getElementById("tt-quad"); qq.textContent=qm.nombre; qq.style.background=qm.color+"22"; qq.style.color=qm.color;
+  document.getElementById("tt-des").textContent=desEscala4+" / 4"; document.getElementById("tt-pot").textContent=potEscala4+" / 4";
+  document.getElementById("tt-des-bar").style.width=des+"%"; document.getElementById("tt-pot-bar").style.width=pot+"%";
+}
+
+function hideStack() { stackPopoverEl.classList.remove("visible"); }
+function toggleStack(e,group,key,dotCX,dotCY,dotR) {
+  if(stackFijo&&activeStackKey===key) { stackFijo=false; activeStackKey=null; hideStack(); refreshHL(); return; }
+  stackFijo=true; activeStackKey=key; activeCC=null; activeQuadrant=null;
+  tooltipFijo=false; hideTooltip();
+  fillStack(group,key,dotCX,dotCY,dotR);
+  const svgRect=document.getElementById("grid-svg").getBoundingClientRect();
+  const svgW=parseFloat(document.getElementById("grid-svg").getAttribute("viewBox").split(" ")[2]);
+  const svgH=parseFloat(document.getElementById("grid-svg").getAttribute("viewBox").split(" ")[3]);
+  posNearDot(stackPopoverEl, dotCX, dotCY, dotR, svgRect, svgW, svgH);
+  stackPopoverEl.classList.add("visible"); refreshHL();
+}
+function fillStack(group,key,dotCX,dotCY,dotR) {
+  const qm=clasificar(group[0].PUNTAJE_DESEMPENO,group[0].PUNTAJE_POTENCIAL);
+  document.getElementById("sp-count").textContent=group.length;
+  document.getElementById("sp-title").textContent=`Des ${(group[0].PUNTAJE_DESEMPENO/25).toFixed(2)}/4 · Pot ${(group[0].PUNTAJE_POTENCIAL/25).toFixed(2)}/4`;
+  const list=document.getElementById("sp-list"); list.innerHTML="";
+  group.forEach(emp=>{
+    const color=colorMap[emp.CC];
+    const item=document.createElement("div"); item.className="sp-item";
+    const av=document.createElement("div"); av.className="sp-avatar"; av.style.borderColor=color;
+    if(emp.FOTO) av.innerHTML=`<img src="${emp.FOTO}"/>`;
+    else { av.style.background=color; av.textContent=iniciales(emp.NOMBRE); }
+    const info=document.createElement("div");
+    info.innerHTML=`<div class="sp-nombre">${emp.NOMBRE}</div><div class="sp-cargo">${emp.CARGO||"—"}</div><div class="sp-quad" style="color:${qm.color}">${qm.nombre}</div>`;
+    item.appendChild(av); item.appendChild(info);
+    item.addEventListener("click",e2=>{
+      e2.stopPropagation();
+      stackFijo=false; hideStack(); activeStackKey=null; activeQuadrant=null;
+      activeCC=emp.CC; tooltipFijo=true; tooltipEl._cc=emp.CC;
+      fillTooltip(emp,color);
+      if (dotCX !== undefined) {
+        const svgEl  = document.getElementById("grid-svg");
+        const svgRect= svgEl.getBoundingClientRect();
+        const vb     = svgEl.getAttribute("viewBox").split(" ");
+        posNearDot(tooltipEl, dotCX, dotCY, dotR, svgRect, parseFloat(vb[2]), parseFloat(vb[3]));
+      } else {
+        const rect=item.getBoundingClientRect();
+        posEl(tooltipEl,{clientX:rect.right+8,clientY:rect.top},210,190);
+      }
+      tooltipEl.classList.add("visible"); refreshHL();
+    });
+    list.appendChild(item);
+  });
+}
+
+document.addEventListener("click",()=>{
+  if(tooltipFijo){ tooltipFijo=false; tooltipEl._cc=null; hideTooltip(); activeCC=null; refreshHL(); }
+  if(stackFijo){ stackFijo=false; activeStackKey=null; hideStack(); refreshHL(); }
+  if(activeQuadrant){ activeQuadrant=null; refreshHL(); }
+});
+
+function handleNameClick(emp, evt) {
+  if (evt) evt.stopPropagation();
+  stackFijo=false; activeStackKey=null; hideStack();
+  tooltipFijo=false; hideTooltip();
+  activeQuadrant=null;
+  if (activeCC===emp.CC) { activeCC=null; } else { activeCC=emp.CC; }
+  refreshHL();
+}
+
+function toggleQuadrant(nombre) {
+  stackFijo=false; activeStackKey=null; hideStack();
+  tooltipFijo=false; activeCC=null; tooltipEl._cc=null; hideTooltip();
+  activeQuadrant = (activeQuadrant === nombre) ? null : nombre;
+  refreshHL();
+}
+
+function refreshHL() {
+  let selectedCCs = new Set();
+  if (activeCC) selectedCCs.add(activeCC);
+  if (activeStackKey) {
+    empleadosFiltrados.filter(e=>scoreKey(e)===activeStackKey).forEach(e=>selectedCCs.add(e.CC));
+  }
+  if (activeQuadrant) {
+    empleadosFiltrados.filter(e=>clasificar(e.PUNTAJE_DESEMPENO,e.PUNTAJE_POTENCIAL).nombre===activeQuadrant).forEach(e=>selectedCCs.add(e.CC));
+  }
+  document.querySelectorAll(".name-item").forEach(el => {
+    el.style.display = "";
+    const cc = el.id.replace("ni-", "");
+    if (selectedCCs.size === 0 || !selectedCCs.has(cc)) el.classList.remove("activo");
+    else el.classList.add("activo");
+  });
+  document.querySelectorAll(".stat-card").forEach(el => {
+    if (activeQuadrant && el.dataset.quad === activeQuadrant) el.classList.add("activo");
+    else el.classList.remove("activo");
+  });
+  buildGrid(empleadosFiltrados, selectedCCs);
+}
+
+function filtrar() {
+  const area=document.getElementById("filtro-area").value;
+  const cargo=document.getElementById("filtro-cargo").value;
+  empleadosFiltrados=todosEmpleados.filter(e=>(!area||e.AREA===area)&&(!cargo||e.CARGO===cargo));
+  activeCC=null; activeStackKey=null; activeQuadrant=null;
+  tooltipFijo=false; tooltipEl._cc=null; hideTooltip();
+  stackFijo=false; hideStack();
+  buildStats(empleadosFiltrados); buildNames(empleadosFiltrados); buildGrid(empleadosFiltrados);
+}
+function poblarFiltros(list) {
+  const areas=[...new Set(list.map(e=>e.AREA).filter(Boolean))].sort();
+  const cargos=[...new Set(list.map(e=>e.CARGO).filter(Boolean))].sort();
+  const sa=document.getElementById("filtro-area"); areas.forEach(a=>{const o=document.createElement("option");o.value=o.textContent=a;sa.appendChild(o);});
+  const sc=document.getElementById("filtro-cargo"); cargos.forEach(c=>{const o=document.createElement("option");o.value=o.textContent=c;sc.appendChild(o);});
+}
+
+function showLoading() {
+  document.getElementById("names-panel").innerHTML =
+    `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;opacity:0.4">
+       <div style="width:18px;height:18px;border:2px solid rgba(255,255,255,0.15);border-top-color:#7c6af7;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+       <span style="font-size:0.6rem;font-family:'JetBrains Mono',monospace;color:#555d78;text-transform:uppercase;letter-spacing:0.06em">Cargando...</span>
+     </div>`;
+  const svg=document.getElementById("grid-svg");
+  const wrap=document.getElementById("canvas-wrap");
+  svg.setAttribute("viewBox",`0 0 ${wrap.clientWidth||600} ${wrap.clientHeight||400}`);
+  svg.innerHTML=`<text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,255,255,0.15)" font-size="13" font-family="JetBrains Mono,monospace">Conectando a la API...</text>`;
+}
+
+/* ── APPLY CLIENT THEMING ── */
+function applyClientTheme(session) {
+  /* Accent color */
+  document.documentElement.style.setProperty("--accent", session.color);
+
+  /* Empresa logo / badge */
+  const wrap = document.getElementById("empresa-logo-wrap");
+  if (session.logo) {
+    wrap.innerHTML = `<img class="empresa-badge-img" src="${session.logo}" alt="${session.empresa}"/>`;
+  } else {
+    const initials = session.empresa.split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase();
+    wrap.innerHTML = `<div class="empresa-badge-initials" style="background:${session.color}">${initials}</div>`;
+  }
+
+  /* Sub title */
+  document.getElementById("empresa-sub").textContent = session.empresa + " · Evaluación de Talento";
+
+  /* User chip */
+  const av = document.getElementById("user-avatar");
+  const nm = document.getElementById("user-name");
+  av.style.background = session.color;
+  av.textContent = session.nombre.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+  nm.textContent = session.nombre.split(" ")[0];
+}
+
+/* ── INIT ── */
+async function init() {
+  /* 1. Auth guard */
+  console.log("[index] Verificando sesión...");
+  const session = requireAuth();
+  if (!session) {
+    console.warn("[index] Sin sesión — redirigiendo a login");
+    return;
+  }
+  console.log("[index] Sesión OK:", session.username, "empresa:", session.empresa);
+
+  /* 2. Aplicar tema de la empresa */
+  applyClientTheme(session);
+
+  showLoading();
+
+  /* 3. Cargar datos desde la API de la empresa (o demo) */
+  try {
+    const res = await fetch(session.apiUrl);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    todosEmpleados = Array.isArray(data) ? data : (data.empleados ?? data.data ?? []);
+    if (!todosEmpleados.length) throw new Error("Sin registros");
+    // Guardar en caché para que dashboard los lea sin re-llamar la API
+    try { sessionStorage.setItem("9box_empleados", JSON.stringify(todosEmpleados)); } catch(e) {}
+    console.log("[index] Datos cargados desde API y en caché:", todosEmpleados.length);
+  } catch (err) {
+    console.warn("[index] API no disponible, usando demo:", err.message);
+    todosEmpleados = DEMO;
+    try { sessionStorage.setItem("9box_empleados", JSON.stringify(todosEmpleados)); } catch(e) {}
+  }
+
+  todosEmpleados.forEach((emp, i) => { colorMap[emp.CC] = COLORES_DOT[i % COLORES_DOT.length]; });
+  empleadosFiltrados = [...todosEmpleados];
+  poblarFiltros(todosEmpleados);
+  buildStats(empleadosFiltrados);
+  buildNames(empleadosFiltrados);
+  buildGrid(empleadosFiltrados);
+}
+
+window.addEventListener("resize", () => buildGrid(empleadosFiltrados));
+
+/* ── PDF INDIVIDUAL desde tooltip ── */
+function descargarPDFIndividual() {
+  if (!activeCC) return;
+  const emp = todosEmpleados.find(e => e.CC === activeCC);
+  if (!emp) return;
+
+  // Enriquecer con competencias: preferir datos reales, si no existen simular (escala 1-4)
+  if (!emp.COMPETENCIAS || emp.COMPETENCIAS.length === 0) {
+    const reales = typeof getCompetenciasReales === "function" ? getCompetenciasReales(emp.CC) : null;
+    if (reales) {
+      emp.COMPETENCIAS = reales;
+    } else {
+      const COMP_NAMES = [
+        "Orientación al Cliente","Trabajo en Equipo",
+        "Comunicación","Planeación y Organización"
+      ];
+      const seed = emp.CC.charCodeAt(0);
+      emp.COMPETENCIAS = COMP_NAMES.map((nombre,i)=>{
+        const base = ((emp.PUNTAJE_DESEMPENO+emp.PUNTAJE_POTENCIAL)/2)/100*4;
+        const jitter = Math.sin(seed*(i+1)*7.3)*0.6;
+        const puntaje = Math.min(4, Math.max(1, parseFloat((base+jitter).toFixed(2))));
+        const nivel = typeof nivelCompetencia === "function" ? nivelCompetencia(puntaje) : (puntaje>=3?"Fortaleza":"En desarrollo");
+        const tip = typeof tipCompetencia === "function" ? tipCompetencia(nombre, puntaje) : "Continuar reforzando esta competencia.";
+        return { nombre, puntaje, nivel, tip };
+      });
+    }
+  }
+
+  const btn = document.getElementById("tt-pdf-btn");
+  btn.classList.add("loading");
+  btn.innerHTML = `<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Generando...`;
+
+  setTimeout(() => {
+    const session = getSession();
+    ReportePDF.individual(emp, session?.empresa || "Empresa Demo", session?.medicion || "2026");
+    btn.classList.remove("loading");
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar PDF`;
+  }, 100);
+}
+init();
+</script>
+</body>
+</html>
