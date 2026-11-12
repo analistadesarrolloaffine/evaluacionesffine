@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard — Affine · Gestión Humana</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #f3f5f8;
+  --surface:  #ffffff;
+  --surface2: #f6f8fb;
+  --border:   #e1e6ed;
+  --border2:  #cfd7e2;
+  --text:     #1b2a41;
+  --muted:    #6a7587;
+  --accent:   #1f6f8b;
+
+  --alto:   #0f8f63;
+  --medio:  #b07a00;
+  --bajo:   #c94545;
+
+  --c-estrella:  #818cf8;
+  --c-potencial: #34d399;
+  --c-enigma:    #e879f9;
+  --c-pilar:     #fbbf24;
+  --c-core:      #94a3b8;
+  --c-dilema:    #f87171;
+  --c-experto:   #fb923c;
+  --c-bajo:      #f97316;
+  --c-riesgo:    #ef4444;
+}
+
+html, body { height: 100%; font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); }
+body { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ── HEADER ── */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 24px; flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky; top: 0; z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.empresa-badge-img {
+  width: 34px; height: 34px; border-radius: 8px; object-fit: contain;
+  border: 1px solid var(--border); flex-shrink: 0;
+}
+.empresa-badge-initials {
+  width: 34px; height: 34px; border-radius: 8px; background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.brand-logo { height: 26px; width: auto; display: block; }
+.brand-sep { width: 1px; height: 28px; background: var(--border2); }
+.header-left h1 { font-size: 1rem; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+.header-left p  { font-size: 0.6rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1px; }
+
+.header-right { display: flex; align-items: center; gap: 10px; }
+
+.btn-back {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 6px 14px; border-radius: 8px;
+  font-family: 'Syne', sans-serif; font-size: 0.75rem; font-weight: 500;
+  cursor: pointer; text-decoration: none; transition: border-color 0.2s, background 0.2s;
+}
+.btn-back:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, #fff); }
+.btn-back svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+/* user chip */
+.user-chip {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 12px 4px 6px;
+}
+.user-chip-avatar {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); display: flex; align-items: center;
+  justify-content: center; font-size: 0.55rem; font-weight: 700; color: #fff;
+}
+.user-chip-name { font-size: 0.68rem; font-weight: 500; }
+.user-chip-rol  { font-size: 0.58rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+.btn-logout {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--muted); padding: 5px 11px; border-radius: 8px;
+  font-family: 'Syne', sans-serif; font-size: 0.7rem; cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-logout:hover { border-color: #f1b4b4; color: #c62828; }
+.btn-logout svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+.medicion-badge {
+  background: color-mix(in srgb, var(--accent) 8%, #fff); border: 1px solid color-mix(in srgb, var(--accent) 30%, #fff);
+  color: var(--accent); padding: 4px 10px; border-radius: 20px;
+  font-size: 0.68rem; font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── MAIN ── */
+main {
+  flex: 1; overflow-y: auto;
+  padding: 20px 24px 40px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+main::-webkit-scrollbar { width: 6px; }
+main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
+
+.page-title { display: flex; align-items: baseline; gap: 12px; flex-shrink: 0; }
+.page-title h2 { font-size: 1.5rem; font-weight: 700; color: var(--text); letter-spacing: -0.03em; }
+.page-title span { font-size: 0.7rem; font-family: 'JetBrains Mono', monospace; color: var(--muted); }
+
+.filter-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.filter-bar select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: 6px 12px; border-radius: 8px;
+  font-family: 'Syne', sans-serif; font-size: 0.75rem; cursor: pointer; outline: none;
+  transition: border-color 0.2s;
+}
+.filter-bar select:hover { border-color: var(--accent); }
+.filter-label { font-size: 0.68rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.06em; }
+
+.row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.span-2 { grid-column: span 2; }
+.comp-group { font-size: 0.62rem; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); font-weight: 700; padding: 10px 0 2px; border-bottom: 1px solid var(--border); margin-bottom: 4px; break-after: avoid; }
+.comp-group:first-child { padding-top: 0; }
+.comp-cols { columns: 2; column-gap: 28px; display: block !important; }
+.comp-cols .comp-row { margin-bottom: 10px; }
+.comp-block { break-inside: avoid; margin-bottom: 8px; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 18px 20px;
+  box-shadow: 0 1px 2px rgba(27,42,65,0.05), 0 6px 20px rgba(27,42,65,0.05);
+  display: flex; flex-direction: column; gap: 14px;
+}
+.card-title {
+  font-size: 0.78rem; font-weight: 600; color: var(--text);
+  letter-spacing: 0.01em; display: flex; align-items: center; gap: 8px;
+}
+.card-title .dot-accent {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); flex-shrink: 0;
+}
+
+.kpi-value {
+  font-size: 2.6rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+  color: var(--text); line-height: 1; letter-spacing: -0.04em;
+}
+.kpi-sub { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
+.kpi-bars { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.kpi-bar-row { display: flex; align-items: center; gap: 8px; }
+.kpi-bar-label { font-size: 0.62rem; color: var(--muted); width: 112px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; font-family: 'JetBrains Mono', monospace; }
+.kpi-bar-track { flex: 1; height: 6px; background: #e8edf3; border-radius: 4px; overflow: hidden; }
+.kpi-bar-fill  { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+.kpi-bar-val { font-size: 0.6rem; font-family: 'JetBrains Mono', monospace; color: var(--muted); width: 32px; text-align: right; }
+
+.ninebox-mini {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr); gap: 3px;
+}
+.nb-cell {
+  border-radius: 6px; padding: 5px 7px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: relative; overflow: hidden; min-height: 0;
+}
+.nb-cell::before {
+  content: ''; position: absolute; inset: 0;
+  background: var(--cell-color, #fff); opacity: 0.08;
+}
+.nb-name { font-size: 0.55rem; color: var(--muted); font-weight: 600; line-height: 1.2; z-index:1; position:relative; flex:1; }
+.nb-count { font-size: 0.95rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--cell-color, var(--text)); z-index:1; position:relative; line-height:1; flex-shrink:0; }
+
+.comp-list { display: flex; flex-direction: column; gap: 10px; }
+.comp-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.comp-name { font-size: 0.72rem; font-weight: 700; color: var(--text); }
+.comp-val  { font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; color: var(--text); font-weight: 600; }
+.comp-track { height: 6px; background: #e8edf3; border-radius: 4px; overflow: hidden; }
+.comp-fill  { height: 100%; border-radius: 4px; transition: width 0.9s ease; }
+
+.areas-list { display: flex; flex-direction: column; gap: 8px; }
+.area-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; background: var(--surface2);
+  border-radius: 8px; border: 1px solid var(--border);
+}
+.area-name { font-size: 0.72rem; font-weight: 500; }
+.area-pct  {
+  font-size: 0.68rem; font-family: 'JetBrains Mono', monospace;
+  font-weight: 700; padding: 2px 8px; border-radius: 12px;
+}
+.area-pct.high { background: #fdecec; color: #b42323; }
+.area-pct.med  { background: #fbf3dc; color: #8a5f00; }
+.area-pct.low  { background: #e6f5ee; color: #0f7a55; }
+
+.chart-wrap { position: relative; height: 200px; }
+.chart-wrap canvas { width: 100% !important; height: 100% !important; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.spin { animation: spin 0.8s linear infinite; }
+.fadein { animation: fadeIn 0.35s ease forwards; }
+
+.section-label {
+  font-size: 0.6rem; font-family: 'JetBrains Mono', monospace;
+  color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* ── PDF ACTIONS CARD ── */
+.pdf-actions-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px 22px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.pdf-actions-header { display: flex; align-items: center; gap: 12px; }
+.pdf-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 8%, #fff); border: 1px solid color-mix(in srgb, var(--accent) 30%, #fff);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent); flex-shrink: 0;
+}
+.pdf-title { font-size: 0.9rem; font-weight: 700; color: var(--text); }
+.pdf-sub   { font-size: 0.68rem; color: var(--muted); margin-top: 2px; }
+
+.pdf-buttons {
+  display: flex; gap: 0; align-items: stretch;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden;
+}
+.pdf-divider { width: 1px; background: var(--border); flex-shrink: 0; }
+.pdf-btn-group {
+  flex: 1; padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.pdf-group-label {
+  font-size: 0.68rem; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  font-family: 'JetBrains Mono', monospace;
+}
+.pdf-group-sub {
+  font-size: 0.65rem; color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.pdf-select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: 7px 10px; border-radius: 8px;
+  font-family: 'Syne', sans-serif; font-size: 0.75rem;
+  cursor: pointer; outline: none; width: 100%;
+}
+.pdf-select:hover { border-color: var(--accent); }
+
+.btn-pdf-individual, .btn-pdf-masivo {
+  display: flex; align-items: center; gap: 7px;
+  border: none; padding: 9px 16px; border-radius: 8px;
+  font-family: 'Syne', sans-serif; font-size: 0.78rem; font-weight: 600;
+  cursor: pointer; transition: opacity 0.2s, transform 0.15s;
+  width: fit-content;
+}
+.btn-pdf-individual {
+  background: var(--accent);
+  color: #fff; box-shadow: 0 4px 14px rgba(31,111,139,0.25);
+}
+.btn-pdf-masivo {
+  background: #1b2a41;
+  color: #fff; box-shadow: 0 4px 14px rgba(27,42,65,0.2);
+}
+.btn-pdf-individual:hover, .btn-pdf-masivo:hover { opacity:0.88; transform:translateY(-1px); }
+.btn-pdf-individual:disabled, .btn-pdf-masivo:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+/* Barra de progreso */
+.pdf-progress-wrap { display:flex; flex-direction:column; gap:6px; }
+.pdf-progress-label { font-size:0.7rem; color:var(--muted); font-family:'JetBrains Mono',monospace; }
+.pdf-progress-bar-track { height:6px; background:#e8edf3; border-radius:4px; overflow:hidden; }
+.pdf-progress-bar-fill  { height:100%; background:var(--accent); border-radius:4px; transition:width 0.3s ease; width:0%; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <img class="brand-logo" src="assets/affine-logo.png" alt="Affine"/>
+    <div class="brand-sep"></div>
+    <div id="empresa-logo-wrap"></div>
+    <div>
+      <h1>Dashboard</h1>
+      <p id="empresa-sub">Gestión Humana · Evaluación de Talento</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="medicion-badge" id="medicion-badge">—</span>
+    <a href="index.html" class="btn-back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Ver 9-Box Grid
+    </a>
+    <div class="user-chip">
+      <div class="user-chip-avatar" id="user-avatar">U</div>
+      <div>
+        <div class="user-chip-name" id="user-name">—</div>
+        <div class="user-chip-rol" id="user-rol">—</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="logout()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Salir
+    </button>
+  </div>
+</header>
+
+<main id="main">
+
+  <div class="page-title">
+    <h2>Análisis General</h2>
+    <span id="fecha-badge">—</span>
+  </div>
+
+  <div class="filter-bar">
+    <span class="filter-label">Filtrar:</span>
+    <select id="filtro-area" onchange="onAreaChange()">
+      <option value="">Todas las áreas</option>
+    </select>
+    <select id="filtro-cargo" onchange="renderDashboard()">
+      <option value="">Todos los cargos</option>
+    </select>
+  </div>
+
+  <div class="section-label">Resumen general</div>
+  <div class="row-3" id="row-kpis"></div>
+
+  <div class="section-label">Distribución 9-Box</div>
+  <div class="row-3" id="row-ninebox"></div>
+
+  <div class="section-label">Análisis por área</div>
+  <div class="row-2" id="row-charts"></div>
+
+  <div class="section-label" id="gauss-label">Distribución de competencias — Campana de Gauss (escala 1-4)</div>
+  <div class="card fadein" id="card-gauss">
+    <div class="card-title"><div class="dot-accent"></div>Distribución normal de competencias individuales</div>
+    <div class="chart-wrap" style="height:210px"><canvas id="chart-gauss"></canvas></div>
+    <div id="gauss-stats" style="font-size:0.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace;text-align:center"></div>
+  </div>
+
+  <div class="section-label">Reportes PDF</div>
+  <div class="pdf-actions-card">
+    <div class="pdf-actions-header">
+      <div class="pdf-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      <div>
+        <div class="pdf-title">Exportar Reportes</div>
+        <div class="pdf-sub">Descarga los OnePager individuales o el informe completo del equipo</div>
+      </div>
+    </div>
+    <div class="pdf-progress-wrap" id="pdf-progress-wrap" style="display:none">
+      <div class="pdf-progress-label" id="pdf-progress-label">Generando...</div>
+      <div class="pdf-progress-bar-track"><div class="pdf-progress-bar-fill" id="pdf-progress-bar"></div></div>
+    </div>
+    <div class="pdf-buttons">
+      <div class="pdf-btn-group">
+        <span class="pdf-group-label">Reporte individual</span>
+        <select id="pdf-select-emp" class="pdf-select"><option value="">— Seleccionar empleado —</option></select>
+        <button class="btn-pdf-individual" id="btn-pdf-ind" onclick="descargarIndividual()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Descargar PDF
+        </button>
+      </div>
+      <div class="pdf-divider"></div>
+      <div class="pdf-btn-group">
+        <span class="pdf-group-label">Reporte masivo</span>
+        <span class="pdf-group-sub" id="pdf-count-label">— empleados en el filtro actual</span>
+        <button class="btn-pdf-masivo" id="btn-pdf-mas" onclick="descargarMasivo()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Descargar todos
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+</main>
+
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- AUTH + CONFIG primero -->
+<script src="clients.js"></script>
+<!-- Datos de evaluación KAIKA -->
+<script src="kaika_data.js"></script>
+<!-- Datos de evaluación UNIGAS -->
+<script src="unigas_data.js"></script>
+<!-- Datos reales de competencias individuales + tips de mejora -->
+<script src="competencias_data.js"></script>
+<!-- Retroalimentación 360 real (feedback de líderes/pares) -->
+<script src="feedback_data.js"></script>
+<script src="reporte_pdf.js"></script>
+<script>
+/* ══════════════════════════════════════════
+   CONFIG
+   ══════════════════════════════════════════ */
+const DEMO_EMPLEADOS = [];  /* sin datos de ejemplo */
+
+const QUADRANT_META = [
+  { nombre:"Enigma",         color:"#a23cbf", r:0, c:0 },
+  { nombre:"Potencial Alto", color:"#0f8f63", r:0, c:1 },
+  { nombre:"Estrella",       color:"#3f4fd8", r:0, c:2 },
+  { nombre:"Dilema",         color:"#c94545", r:1, c:0 },
+  { nombre:"Core",           color:"#5b6b80", r:1, c:1 },
+  { nombre:"Pilar",          color:"#b07a00", r:1, c:2 },
+  { nombre:"En Riesgo",      color:"#b42323", r:2, c:0 },
+  { nombre:"Bajo Desempeño", color:"#cc5a12", r:2, c:1 },
+  { nombre:"Experto",        color:"#c26a1a", r:2, c:2 },
+];
+
+/* Competencias generales de la compañía — datos fijos (no dependen de filtros) */
+const COMPETENCIAS_GENERALES = [];
+const COMP_COLORS = [
+  "#1f6f8b","#0f8f63","#b07a00","#c94545","#3f4fd8",
+  "#a23cbf","#cc5a12","#0e7490","#be185d","#4d7c0f",
+  "#475569","#6d28d9","#047857","#9f1239","#1d4ed8","#a16207",
+];
+/* Escala de competencias del cliente activo (Kaika = 6) */
+function escalaComp() { return window.COMP_ESCALA_MAX || 4; }
+function usaDatosLocales() { return !!window.COMP_ESCALA_MAX; }
+/* Competencias generales: con datos locales se calculan del filtro actual */
+function competenciasGenerales(list) {
+  if (!usaDatosLocales()) return COMPETENCIAS_GENERALES;
+  const acc = {};
+  list.forEach(e => (e.COMPETENCIAS||[]).forEach(c => {
+    (acc[c.nombre] = acc[c.nombre] || []).push(c.puntaje);
+  }));
+  return Object.entries(acc)
+    .map(([nombre, v]) => ({ nombre: nombre.charAt(0) + nombre.slice(1).toLowerCase(), valor: avg(v), n: v.length }))
+    .sort((a,b) => b.n - a.n).slice(0, (window.REGLAS && window.REGLAS.grupos_competencias) ? 999 : 10);
+}
+
+let todosEmpleados = [];
+let chartPromedios  = null;
+let chartDistrib    = null;
+let chartGauss      = null;
+let currentSession  = null;
+
+/* ══════════════════════════════════════════
+   HELPERS
+   ══════════════════════════════════════════ */
+/* Cortes del 9-Box (en %): bajo 0–16 · medio 16,1–84 · alto 84,1–100 */
+const CORTE_BAJO = 16, CORTE_ALTO = 84;
+function nivel3(v) { return v > CORTE_ALTO ? 2 : v > CORTE_BAJO ? 1 : 0; }   // 0 bajo · 1 medio · 2 alto
+function enDashboardPct() { return !!(window.REGLAS && window.REGLAS.dashboard_pct); }
+
+function clasificar(des, pot) {
+  const col  = nivel3(des);
+  const fila = 2 - nivel3(pot);
+  return QUADRANT_META.find(q => q.r === fila && q.c === col);
+}
+function avg(arr) { return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
+function filtrados() {
+  const area  = document.getElementById("filtro-area").value;
+  const cargo = document.getElementById("filtro-cargo").value;
+  return todosEmpleados.filter(e => (!area || e.AREA===area) && (!cargo || e.CARGO===cargo));
+}
+function areas() {
+  return [...new Set(todosEmpleados.map(e=>e.AREA).filter(Boolean))].sort();
+}
+function barColor(val) {
+  return ["#c94545","#b07a00","#0f8f63"][nivel3(val)];
+}
+
+/* ══════════════════════════════════════════
+   RENDER
+   ══════════════════════════════════════════ */
+function renderDashboard() {
+  const list = filtrados();
+  renderKPIs(list);
+  renderNineBox(list);
+  renderCharts(list);
+  renderGauss(list);
+  actualizarContadorPDF();
+}
+
+function renderKPIs(list) {
+  const container = document.getElementById("row-kpis");
+  const totalEval = list.length;
+  const avgDes    = avg(list.map(e=>e.PUNTAJE_DESEMPENO));
+  const avgPot    = avg(list.map(e=>e.PUNTAJE_POTENCIAL));
+
+  const areaFiltro = document.getElementById("filtro-area").value;
+  const breakdownItems = areaFiltro
+    ? [...new Set(list.map(e=>e.CARGO).filter(Boolean))].sort()
+    : [...new Set(list.map(e=>e.AREA).filter(Boolean))].sort();
+  const breakdownKey = areaFiltro ? "CARGO" : "AREA";
+
+  const areaBarRows = breakdownItems.map(a => {
+    const count = list.filter(e=>e[breakdownKey]===a).length;
+    const pct   = totalEval ? (count/totalEval*100) : 0;
+    return `<div class="kpi-bar-row">
+      <span class="kpi-bar-label" title="${a}">${a}</span>
+      <div class="kpi-bar-track"><div class="kpi-bar-fill fadein" style="width:${pct}%;background:var(--accent)"></div></div>
+      <span class="kpi-bar-val">${count}</span>
+    </div>`;
+  }).join("") || `<span style="font-size:0.62rem;color:var(--muted)">Sin datos</span>`;
+
+  const lblAlto  = "Alto (84,1–100%)";
+  const lblMedio = "Medio (16,1–84%)";
+  const lblBajo  = "Bajo (0–16%)";
+  const avgNota  = avg(list.map(e=>e.NOTA_FINAL).filter(v=>v!=null));
+  const RG = window.REGLAS || null;
+  const sufijo = t => `<span style="font-size:1rem;color:var(--muted)">${t}</span>`;
+  /* Valor de una tarjeta según el eje: en escala del cliente si la tiene, si no en % */
+  const kpiEje = (eje, avgPct) => {
+    if (!RG || !eje) return { val: `${(avgPct/25).toFixed(2)}${sufijo("/4")}`, sub: "promedio general · escala 1-4" };
+    if (RG.dashboard_pct) return { val: `${avgPct.toFixed(1)}${sufijo("%")}`, sub: `${eje.nombre.toLowerCase()} · promedio en porcentaje` };
+    if (eje.escala) return { val: `${(avgPct/100*eje.escala).toFixed(2)}${sufijo("/"+eje.escala)}`, sub: `${eje.nombre.toLowerCase()} · escala 1-${eje.escala} (${avgPct.toFixed(1)}%)` };
+    return { val: `${avgPct.toFixed(1)}${sufijo("%")}`, sub: `cumplimiento promedio de ${eje.nombre.toLowerCase()}` };
+  };
+  const kx = kpiEje(RG && RG.eje_x, avgDes), ky = kpiEje(RG && RG.eje_y, avgPot);
+  const desVal = kx.val, potVal = ky.val, desSub = kx.sub, potSub = ky.sub;
+  const desTit = RG ? `Desempeño · ${RG.eje_x.nombre.toLowerCase()} promedio` : "Desempeño/Competencias promedio";
+  const potTit = RG && RG.eje_y.nombre.toLowerCase() !== "potencial" ? `Potencial · ${RG.eje_y.nombre.toLowerCase()} promedio` : "Potencial promedio";
+  const desBars = [
+    { label:lblAlto,     count: list.filter(e=>nivel3(e.PUNTAJE_DESEMPENO)===2).length,                               color:"#0f8f63" },
+    { label:lblMedio, count: list.filter(e=>nivel3(e.PUNTAJE_DESEMPENO)===1).length,      color:"#b07a00" },
+    { label:lblBajo,     count: list.filter(e=>nivel3(e.PUNTAJE_DESEMPENO)===0).length,                                color:"#c94545" },
+  ].map(b => {
+    const pct = totalEval ? (b.count/totalEval*100) : 0;
+    return `<div class="kpi-bar-row">
+      <span class="kpi-bar-label">${b.label}</span>
+      <div class="kpi-bar-track"><div class="kpi-bar-fill fadein" style="width:${pct}%;background:${b.color}"></div></div>
+      <span class="kpi-bar-val">${b.count}</span>
+    </div>`;
+  }).join("");
+
+  const potBars = [
+    { label:lblAlto,     count: list.filter(e=>nivel3(e.PUNTAJE_POTENCIAL)===2).length,                              color:"#0f8f63" },
+    { label:lblMedio, count: list.filter(e=>nivel3(e.PUNTAJE_POTENCIAL)===1).length,     color:"#b07a00" },
+    { label:lblBajo,     count: list.filter(e=>nivel3(e.PUNTAJE_POTENCIAL)===0).length,                               color:"#c94545" },
+  ].map(b => {
+    const pct = totalEval ? (b.count/totalEval*100) : 0;
+    return `<div class="kpi-bar-row">
+      <span class="kpi-bar-label">${b.label}</span>
+      <div class="kpi-bar-track"><div class="kpi-bar-fill fadein" style="width:${pct}%;background:${b.color}"></div></div>
+      <span class="kpi-bar-val">${b.count}</span>
+    </div>`;
+  }).join("");
+
+  container.innerHTML = `
+    <div class="card fadein">
+      <div class="card-title"><div class="dot-accent"></div>Participación</div>
+      <div class="kpi-value">${totalEval}</div>
+      <div class="kpi-sub">empleados evaluados${usaDatosLocales() && list.length ? ` · nota final promedio ${avgNota.toFixed(1)}%` : ""}</div>
+      <div class="kpi-bars">${areaBarRows}</div>
+    </div>
+    <div class="card fadein" style="animation-delay:0.05s">
+      <div class="card-title"><div class="dot-accent" style="background:#0f8f63"></div>${desTit}</div>
+      <div class="kpi-value" style="color:${barColor(avgDes)}">${desVal}</div>
+      <div class="kpi-sub">${desSub}</div>
+      <div class="kpi-bars">${desBars}</div>
+    </div>
+    <div class="card fadein" style="animation-delay:0.1s">
+      <div class="card-title"><div class="dot-accent"></div>${potTit}</div>
+      <div class="kpi-value" style="color:${barColor(avgPot)}">${potVal}</div>
+      <div class="kpi-sub">${potSub}</div>
+      <div class="kpi-bars">${potBars}</div>
+    </div>
+  `;
+}
+
+function renderNineBox(list) {
+  const container = document.getElementById("row-ninebox");
+  const counts = {};
+  QUADRANT_META.forEach(qm => { counts[qm.nombre] = 0; });
+  list.forEach(e => { const q = clasificar(e.PUNTAJE_DESEMPENO, e.PUNTAJE_POTENCIAL); counts[q.nombre]++; });
+  const cells = QUADRANT_META.map(qm => `
+    <div class="nb-cell" style="--cell-color:${qm.color};background:${qm.color}14">
+      <div class="nb-name">${qm.nombre}</div>
+      <div class="nb-count" style="color:${qm.color}">${counts[qm.nombre]}</div>
+    </div>`).join("");
+
+  const compFila = (c, i) => {
+    const pct = (c.valor/escalaComp())*100;
+    const val = enDashboardPct() ? `${pct.toFixed(1)}%` : `${c.valor.toFixed(2)} / ${escalaComp()}`;
+    return `<div class="comp-row fadein" style="animation-delay:${0.03*i}s">
+      <div class="comp-header">
+        <span class="comp-name">${c.nombre}</span>
+        <span class="comp-val">${val}</span>
+      </div>
+      <div class="comp-track"><div class="comp-fill" style="width:${pct}%;background:${COMP_COLORS[i % COMP_COLORS.length]}"></div></div>
+    </div>`;
+  };
+  const generales = competenciasGenerales(list);
+  const grupos = window.REGLAS && window.REGLAS.grupos_competencias;
+  let compRows;
+  if (grupos) {
+    /* Agrupar según las reglas del cliente; "resto" recoge las que no estén en otro grupo */
+    const norm = t => t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().trim();
+    const usados = new Set(grupos.filter(g=>!g.resto).flatMap(g=>g.items.map(norm)));
+    let k = 0;
+    compRows = grupos.map(g => {
+      const items = g.resto
+        ? generales.filter(c => !usados.has(norm(c.nombre)))
+        : g.items.map(n => generales.find(c => norm(c.nombre) === norm(n))).filter(Boolean);
+      if (!items.length) return "";
+      return `<div class="comp-block"><div class="comp-group">${g.nombre}</div>` + items.map(c => compFila(c, k++)).join("") + `</div>`;
+    }).join("");
+  } else {
+    compRows = generales.map(compFila).join("");
+  }
+
+
+  container.innerHTML = `
+    <div class="card fadein">
+      <div class="card-title"><div class="dot-accent"></div>Distribución 9-Box</div>
+      <div class="ninebox-mini">${cells}</div>
+    </div>
+    <div class="card fadein span-2" style="animation-delay:0.04s">
+      <div class="card-title"><div class="dot-accent" style="background:#b07a00"></div>Competencias generales de la compañía</div>
+      <div class="comp-list${grupos ? " comp-cols" : ""}">${compRows}</div>
+    </div>
+  `;
+}
+
+function renderCharts(list) {
+  const container = document.getElementById("row-charts");
+  container.innerHTML = `
+    <div class="card fadein">
+      <div class="card-title"><div class="dot-accent" style="background:#0f8f63"></div>Promedios por área</div>
+      <div class="chart-wrap"><canvas id="chart-promedios"></canvas></div>
+    </div>
+    <div class="card fadein" style="animation-delay:0.06s">
+      <div class="card-title"><div class="dot-accent"></div>Distribución de potencial por área</div>
+      <div class="chart-wrap"><canvas id="chart-distrib"></canvas></div>
+    </div>
+  `;
+
+  const areaList = [...new Set(list.map(e=>e.AREA).filter(Boolean))].sort();
+  Chart.defaults.font  = { family:"'JetBrains Mono', monospace", size:10 };
+  Chart.defaults.color = "#6a7587";
+
+  const desAvgs = areaList.map(a => avg(list.filter(e=>e.AREA===a).map(e=>e.PUNTAJE_DESEMPENO)));
+  const potAvgs = areaList.map(a => avg(list.filter(e=>e.AREA===a).map(e=>e.PUNTAJE_POTENCIAL)));
+
+  if (chartPromedios) chartPromedios.destroy();
+  chartPromedios = new Chart(document.getElementById("chart-promedios"), {
+    type:"bar",
+    data:{
+      labels: areaList,
+      datasets:[
+        { label: window.REGLAS ? window.REGLAS.eje_x.nombre+" %" : "Desempeño", data:desAvgs, backgroundColor:"rgba(15,143,99,0.8)", borderRadius:6, borderSkipped:false },
+        { label: window.REGLAS ? window.REGLAS.eje_y.nombre+" %" : "Potencial",  data:potAvgs, backgroundColor:"rgba(31,111,139,0.8)",  borderRadius:6, borderSkipped:false },
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:"#6b7280", boxWidth:10, font:{size:10} } } },
+      scales:{
+        x:{ grid:{color:"rgba(27,42,65,0.06)"}, ticks:{color:"#6b7280", maxRotation:30} },
+        y:{ min:0, max:100, grid:{color:"rgba(27,42,65,0.07)"}, ticks:{color:"#6b7280"} }
+      }
+    }
+  });
+
+  const altoData  = areaList.map(a => list.filter(e=>e.AREA===a&&nivel3(e.PUNTAJE_POTENCIAL)===2).length);
+  const medioData = areaList.map(a => list.filter(e=>e.AREA===a&&nivel3(e.PUNTAJE_POTENCIAL)===1).length);
+  const bajoData  = areaList.map(a => list.filter(e=>e.AREA===a&&nivel3(e.PUNTAJE_POTENCIAL)===0).length);
+
+  if (chartDistrib) chartDistrib.destroy();
+  chartDistrib = new Chart(document.getElementById("chart-distrib"), {
+    type:"bar",
+    data:{
+      labels: areaList,
+      datasets:[
+        { label:"Alto",  data:altoData,  backgroundColor:"rgba(15,143,99,0.85)",  borderRadius:0, stack:"s" },
+        { label:"Medio", data:medioData, backgroundColor:"rgba(214,158,20,0.85)",  borderRadius:0, stack:"s" },
+        { label:"Bajo",  data:bajoData,  backgroundColor:"rgba(201,69,69,0.85)",   borderRadius:0, stack:"s" },
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:"#6b7280", boxWidth:10, font:{size:10} } } },
+      scales:{
+        x:{ stacked:true, grid:{color:"rgba(27,42,65,0.06)"}, ticks:{color:"#6b7280", maxRotation:30} },
+        y:{ stacked:true, grid:{color:"rgba(27,42,65,0.07)"}, ticks:{color:"#6b7280"} }
+      }
+    }
+  });
+}
+
+/* ══════════════════════════════════════════
+   CAMPANA DE GAUSS — Distribución de competencias
+   Escala 1 a 4 (usa las puntuaciones reales de
+   competencias individuales, competencias_data.js)
+   ══════════════════════════════════════════ */
+function normalPDF(x, media, sd) {
+  if (!sd) return 0;
+  return (1/(sd*Math.sqrt(2*Math.PI))) * Math.exp(-0.5*Math.pow((x-media)/sd, 2));
+}
+
+function renderGauss(list) {
+  const canvas = document.getElementById("chart-gauss");
+  const statsEl = document.getElementById("gauss-stats");
+  if (!canvas) return;
+
+  /* Puntajes individuales de competencias, convertidos a % de la escala del cliente
+     para compararlos con los mismos cortes del 9-Box (0–16 · 16,1–84 · 84,1–100) */
+  const maxEsc = escalaComp();
+  let scores = [];
+  list.forEach(e => {
+    let comps = e.COMPETENCIAS && e.COMPETENCIAS.length ? e.COMPETENCIAS : null;
+    if (!comps && typeof getCompetenciasReales === "function") comps = getCompetenciasReales(e.CC);
+    if (comps) comps.forEach(c => scores.push(c.puntaje / maxEsc * 100));
+  });
+  const gl = document.getElementById("gauss-label");
+  if (gl) gl.textContent = `Distribución de competencias — Campana de Gauss (%)`;
+
+  if (chartGauss) { chartGauss.destroy(); chartGauss = null; }
+
+  if (scores.length < 2) {
+    statsEl.textContent = "No hay suficientes datos de competencias para generar la distribución.";
+    return;
+  }
+
+  const n     = scores.length;
+  const media = scores.reduce((a,b)=>a+b,0) / n;
+  const sd    = Math.sqrt(scores.reduce((a,b)=>a+Math.pow(b-media,2),0) / n) || 1;
+  const pts   = [];
+  for (let x = 0; x <= 100.0001; x += 0.5) pts.push({ x, y: normalPDF(x, media, sd) });
+
+  const nB = scores.filter(v => nivel3(v) === 0).length;
+  const nM = scores.filter(v => nivel3(v) === 1).length;
+  const nA = scores.filter(v => nivel3(v) === 2).length;
+  const pctTxt = v => (v / n * 100).toFixed(1) + "%";
+
+  /* Bandas de fondo bajo / medio / alto con los mismos cortes del 9-Box */
+  const bandas = {
+    id: "bandas9box",
+    beforeDatasetsDraw(chart) {
+      const { ctx, chartArea: a, scales: { x } } = chart;
+      const zonas = [
+        [0, CORTE_BAJO, "rgba(201,69,69,0.08)", "Bajo"],
+        [CORTE_BAJO, CORTE_ALTO, "rgba(176,122,0,0.06)", "Medio"],
+        [CORTE_ALTO, 100, "rgba(15,143,99,0.09)", "Alto"],
+      ];
+      ctx.save();
+      zonas.forEach(([d, h, col, lbl]) => {
+        const x1 = x.getPixelForValue(d), x2 = x.getPixelForValue(h);
+        ctx.fillStyle = col; ctx.fillRect(x1, a.top, x2 - x1, a.bottom - a.top);
+        ctx.fillStyle = "#6a7587"; ctx.font = "600 10px 'JetBrains Mono', monospace"; ctx.textAlign = "center";
+        ctx.fillText(lbl, (x1 + x2) / 2, a.top + 12);
+      });
+      ctx.strokeStyle = "#b8c3d1"; ctx.setLineDash([4, 4]);
+      [CORTE_BAJO, CORTE_ALTO].forEach(v => {
+        const px = x.getPixelForValue(v);
+        ctx.beginPath(); ctx.moveTo(px, a.top); ctx.lineTo(px, a.bottom); ctx.stroke();
+      });
+      ctx.restore();
+    }
+  };
+
+  Chart.defaults.font  = { family:"'JetBrains Mono', monospace", size:10 };
+  Chart.defaults.color = "#6a7587";
+
+  chartGauss = new Chart(canvas, {
+    type:"line",
+    data:{ datasets:[{
+      label: "Densidad de probabilidad",
+      data: pts,
+      borderColor: "#1f6f8b",
+      backgroundColor: "rgba(31,111,139,0.16)",
+      borderWidth: 2, pointRadius: 0, fill: true, tension: 0.35
+    }]},
+    plugins: [bandas],
+    options:{
+      responsive:true, maintainAspectRatio:false, parsing:false,
+      plugins:{
+        legend:{ display:false },
+        tooltip:{ callbacks:{
+          title: items => `Puntaje: ${items[0].parsed.x.toFixed(1)}%`,
+          label: ctx => `Densidad: ${ctx.parsed.y.toFixed(4)}`
+        }}
+      },
+      scales:{
+        x:{
+          type:"linear", min:0, max:100,
+          title:{ display:true, text:"Puntaje de competencia (%)", color:"#6b7280" },
+          grid:{ color:"rgba(27,42,65,0.06)" },
+          ticks:{ color:"#6b7280", stepSize:10, callback: v => v + "%" }
+        },
+        y:{ display:false, grid:{ display:false } }
+      }
+    }
+  });
+
+  statsEl.innerHTML = `Media: <strong style="color:var(--text)">${media.toFixed(1)}%</strong> ·
+    Desviación estándar: <strong style="color:var(--text)">${sd.toFixed(1)} pts</strong> ·
+    N = ${n} evaluaciones de competencia (${list.length} empleados)<br>
+    Bajo: <strong style="color:#c94545">${nB} (${pctTxt(nB)})</strong> ·
+    Medio: <strong style="color:#b07a00">${nM} (${pctTxt(nM)})</strong> ·
+    Alto: <strong style="color:#0f8f63">${nA} (${pctTxt(nA)})</strong>`;
+}
+
+/* ══════════════════════════════════════════
+   FILTER LOGIC
+   ══════════════════════════════════════════ */
+function onAreaChange() {
+  const area = document.getElementById("filtro-area").value;
+  const sc   = document.getElementById("filtro-cargo");
+  const prev = sc.value;
+  const source = area ? todosEmpleados.filter(e=>e.AREA===area) : todosEmpleados;
+  const cargos = [...new Set(source.map(e=>e.CARGO).filter(Boolean))].sort();
+  sc.innerHTML = `<option value="">Todos los cargos</option>`;
+  cargos.forEach(c => {
+    const o = document.createElement("option");
+    o.value = o.textContent = c;
+    if (c === prev) o.selected = true;
+    sc.appendChild(o);
+  });
+  renderDashboard();
+}
+
+/* ══════════════════════════════════════════
+   CLIENT THEME
+   ══════════════════════════════════════════ */
+function applyClientTheme(session) {
+  document.documentElement.style.setProperty("--accent", session.color);
+
+  const wrap = document.getElementById("empresa-logo-wrap");
+  if (session.logo) {
+    wrap.innerHTML = `<img class="empresa-badge-img" src="${session.logo}" alt="${session.empresa}"/>`;
+  } else {
+    const initials = session.empresa.split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase();
+    wrap.innerHTML = `<div class="empresa-badge-initials" style="background:${session.color}">${initials}</div>`;
+  }
+
+  document.getElementById("empresa-sub").textContent = session.empresa + " · Evaluación de Talento";
+  document.getElementById("medicion-badge").textContent = session.medicion;
+
+  const av = document.getElementById("user-avatar");
+  av.style.background = session.color;
+  av.textContent = session.nombre.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+  document.getElementById("user-name").textContent = session.nombre;
+  document.getElementById("user-rol").textContent  = session.rol;
+}
+
+/* ══════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════ */
+async function init() {
+  /* 1. Auth guard */
+  console.log("[dashboard] Verificando sesión...");
+  currentSession = requireAuth();
+  if (!currentSession) {
+    console.warn("[dashboard] Sin sesión — redirigiendo a login");
+    return;
+  }
+  console.log("[dashboard] Sesión OK:", currentSession.username);
+
+  /* 2. Tema */
+  applyClientTheme(currentSession);
+
+  /* 3. Fecha */
+  document.getElementById("fecha-badge").textContent =
+    new Date().toLocaleDateString("es-CO", { day:"2-digit", month:"long", year:"numeric" });
+
+  /* 4. Cargar datos: archivo local del cliente (Kaika) o API */
+  const local = currentSession.dataLocal && window[currentSession.dataLocal];
+  if (local) {
+    window.COMP_ESCALA_MAX = (local.reglas && local.reglas.comp_escala_max) || 4;
+    window.REGLAS = local.reglas || null;
+    todosEmpleados = local.empleados.filter(e => e.COMPLETO).map(e => ({
+      ...e,
+      COMPETENCIAS: (e.COMPETENCIAS||[]).map(c => ({ ...c, nivel: nivelCompetencia(c.puntaje), tip: tipCompetencia(c.nombre, c.puntaje) }))
+    }));
+  } else try {
+    const res  = await fetch(currentSession.apiUrl);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    todosEmpleados = Array.isArray(data) ? data : (data.empleados ?? data.data ?? []);
+    if (!todosEmpleados.length) throw new Error("Sin datos");
+  } catch {
+    todosEmpleados = DEMO_EMPLEADOS;
+  }
+
+  /* 5. Filtros */
+  const sa = document.getElementById("filtro-area");
+  areas().forEach(a => { const o=document.createElement("option"); o.value=o.textContent=a; sa.appendChild(o); });
+  const cargos = [...new Set(todosEmpleados.map(e=>e.CARGO).filter(Boolean))].sort();
+  const sc = document.getElementById("filtro-cargo");
+  cargos.forEach(c => { const o=document.createElement("option"); o.value=o.textContent=c; sc.appendChild(o); });
+
+  renderDashboard();
+
+  // Poblar select de empleados para reporte individual
+  poblarSelectPDF();
+}
+
+/* ══════════════════════════════════════════
+   FUNCIONES PDF
+   ══════════════════════════════════════════ */
+function enriquecerCompetencias(emp) {
+  if (emp.COMPETENCIAS && emp.COMPETENCIAS.length > 0) return emp;
+
+  // 1) Preferir datos reales de la evaluación (competencias_data.js)
+  if (typeof getCompetenciasReales === "function") {
+    const reales = getCompetenciasReales(emp.CC);
+    if (reales) return { ...emp, COMPETENCIAS: reales };
+  }
+
+  // 2) Fallback: simular competencias (escala 1-4) si no hay datos reales para este CC
+  const COMP_NAMES = [
+    "Orientación al Cliente","Trabajo en Equipo",
+    "Comunicación","Planeación y Organización"
+  ];
+  const seed = (emp.CC||"0").charCodeAt(0);
+  return {
+    ...emp,
+    COMPETENCIAS: COMP_NAMES.map((nombre,i)=>{
+      const base = ((emp.PUNTAJE_DESEMPENO+emp.PUNTAJE_POTENCIAL)/2)/100*4;
+      const jitter = Math.sin(seed*(i+1)*7.3)*0.6;
+      const puntaje = Math.min(4, Math.max(1, parseFloat((base+jitter).toFixed(2))));
+      const nivel = typeof nivelCompetencia === "function" ? nivelCompetencia(puntaje) : (puntaje>=3?"Fortaleza":"En desarrollo");
+      const tip = typeof tipCompetencia === "function" ? tipCompetencia(nombre, puntaje) : "Continuar reforzando esta competencia.";
+      return { nombre, puntaje, nivel, tip };
+    })
+  };
+}
+
+function poblarSelectPDF() {
+  const sel = document.getElementById("pdf-select-emp");
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Seleccionar empleado —</option>';
+  todosEmpleados.forEach(e => {
+    const o = document.createElement("option");
+    o.value = e.CC;
+    o.textContent = `${e.NOMBRE} · ${e.CARGO}`;
+    sel.appendChild(o);
+  });
+}
+
+function actualizarContadorPDF() {
+  const list = filtrados();
+  const lbl = document.getElementById("pdf-count-label");
+  if (lbl) lbl.textContent = `${list.length} empleado${list.length!==1?"s":""} en el filtro actual`;
+}
+
+function descargarIndividual() {
+  const sel = document.getElementById("pdf-select-emp");
+  const cc  = sel ? sel.value : "";
+  if (!cc) { alert("Selecciona un empleado primero"); return; }
+
+  const emp = todosEmpleados.find(e => e.CC === cc);
+  if (!emp) return;
+
+  const btn = document.getElementById("btn-pdf-ind");
+  btn.disabled = true;
+  btn.innerHTML = `<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Generando...`;
+
+  setTimeout(() => {
+    const session = getSession();
+    ReportePDF.individual(
+      enriquecerCompetencias(emp),
+      session?.empresa || "Empresa Demo",
+      session?.medicion || "2026"
+    );
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar PDF`;
+  }, 100);
+}
+
+function descargarMasivo() {
+  const lista = filtrados().map(enriquecerCompetencias);
+  if (!lista.length) { alert("No hay empleados en el filtro actual."); return; }
+
+  const btn  = document.getElementById("btn-pdf-mas");
+  const wrap = document.getElementById("pdf-progress-wrap");
+  const lbl  = document.getElementById("pdf-progress-label");
+  const bar  = document.getElementById("pdf-progress-bar");
+
+  btn.disabled = true;
+  wrap.style.display = "flex";
+  lbl.textContent = `Preparando ${lista.length} reportes...`;
+  bar.style.width  = "0%";
+
+  const session = getSession();
+
+  setTimeout(() => {
+    ReportePDF.masivo(
+      lista,
+      session?.empresa  || "Empresa Demo",
+      session?.medicion || "2026",
+      (actual, total) => {
+        const pct = Math.round(actual/total*100);
+        bar.style.width  = pct + "%";
+        lbl.textContent  = `Generando ${actual} de ${total}...`;
+      }
+    );
+    btn.disabled = false;
+    wrap.style.display = "none";
+    lbl.textContent = "";
+    bar.style.width  = "0%";
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar todos`;
+  }, 150);
+}
+
+init();
+</script>
+</body>
+</html>
