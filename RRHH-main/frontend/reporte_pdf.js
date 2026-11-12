@@ -50,6 +50,21 @@ const ReportePDF = (() => {
   function logo(doc, xRight, y, w) {
     try { doc.addImage(LOGO_AFFINE, "PNG", xRight - w, y, w, w * LOGO_RATIO); } catch(e) {}
   }
+  /* Logo de la empresa cliente (window.LOGOS_CLIENTES, cargado desde logos_data.js) */
+  function logoClienteInfo() {
+    const id = typeof window !== "undefined" && window.CLIENTE_ACTUAL;
+    return id && window.LOGOS_CLIENTES && window.LOGOS_CLIENTES[id];
+  }
+  /* Dibuja el logo del cliente alineado a la derecha (xRight) o a la izquierda (alignLeft) dentro de maxW × maxH */
+  function logoCliente(doc, x, y, maxW, maxH, alignLeft=false) {
+    const L = logoClienteInfo();
+    if (!L) return 0;
+    let w = maxW, h = w * L.ratio;
+    if (h > maxH) { h = maxH; w = h / L.ratio; }
+    try { doc.addImage(L.src, "PNG", alignLeft ? x : x - w, y, w, h); } catch(e) { return 0; }
+    return w;
+  }
+
   /* Escala de competencias del cliente activo (Kaika = 6, por defecto 4) */
   function ESC() { return (typeof window !== "undefined" && window.COMP_ESCALA_MAX) || 4; }
   function esLocal() { return typeof window !== "undefined" && !!window.COMP_ESCALA_MAX; }
@@ -316,7 +331,7 @@ const ReportePDF = (() => {
     doc.setFont("helvetica","normal");
     textCol(doc,C.muted);
     doc.text(hoy(), W-PX, 15, {align:"right"});
-    logo(doc, W-PX, 18, 20);
+    if (!logoCliente(doc, W-PX, 18, 34, 11)) logo(doc, W-PX, 18, 20);
 
     /* ══ KPI CARDS (2 tarjetas: Competencias y Potencial, escala 1-4) ══ */
     let curY = HH+4;
@@ -609,6 +624,7 @@ const ReportePDF = (() => {
     doc.text(`ESCALA 1 - ${ESC()}`, W-PX, 10, {align:"right"});
     doc.setFont("helvetica","normal"); textCol(doc,C.muted);
     doc.text(hoy(), W-PX, 15, {align:"right"});
+    logoCliente(doc, W-PX, 17, 24, 7);
 
     let curY = HH+6;
 
@@ -744,6 +760,7 @@ const ReportePDF = (() => {
       doc.text(`${feedbacks.length} EVALUADOR${feedbacks.length>1?"ES":""}`, W-PX, 10, {align:"right"});
       doc.setFont("helvetica","normal"); textCol(doc,C.muted);
       doc.text(hoy(), W-PX, 15, {align:"right"});
+      logoCliente(doc, W-PX, 17, 24, 7);
       return HH+8;
     }
 

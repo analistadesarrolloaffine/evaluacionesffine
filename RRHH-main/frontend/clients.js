@@ -15,8 +15,8 @@ const CLIENTS = [
   {
     id:        "kaika",
     nombre:    "KAIKA",
-    logo:      "",
-    color:     "#1f6f8b",
+    logo:      "assets/kaika-logo.png",
+    color:     "#1226b5",            // azul del logo Kaika
     apiUrl:    "",
     dataLocal: "EVAL_KAIKA",          // usa window.EVAL_KAIKA en vez de la API
     medicion:  "Evaluación de Desempeño 2026",
@@ -31,8 +31,8 @@ const CLIENTS = [
   {
     id:        "unigas",
     nombre:    "UNIGAS",
-    logo:      "",
-    color:     "#1f6f8b",
+    logo:      "assets/unigas-logo.png",
+    color:     "#c95a14",            // naranja del logo Unigas
     apiUrl:    "",
     dataLocal: "EVAL_UNIGAS",         // usa window.EVAL_UNIGAS en vez de la API
     medicion:  "Evaluación de Competencias 2026",
@@ -79,12 +79,18 @@ function getSession() {
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
     const s = JSON.parse(raw);
-    // Validar que tenga los campos mínimos
     // Validar que tenga los campos mínimos y que el cliente todavía exista
-    if (!s || !s.username || !s.clientId || !CLIENTS.some(c => c.id === s.clientId)) {
+    const client = s && CLIENTS.find(c => c.id === s.clientId);
+    if (!s || !s.username || !client) {
       localStorage.removeItem(SESSION_KEY);
       return null;
     }
+    // Tomar siempre logo, color y fuente de datos actuales del cliente
+    // (así una sesión abierta antes de un cambio queda al día)
+    s.logo      = client.logo      || "";
+    s.color     = client.color     || s.color;
+    s.dataLocal = client.dataLocal || "";
+    s.medicion  = client.medicion  || s.medicion;
     return s;
   } catch(e) {
     console.error("[9box] Error leyendo sesión:", e);

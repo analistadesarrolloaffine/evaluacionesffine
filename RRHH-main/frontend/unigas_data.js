@@ -29,7 +29,35 @@ window.EVAL_UNIGAS = {
    "falta": "sin calificación de potencial del jefe"
   },
   "nota_texto": "80% comp. + 20% pot.",
-  "nota_campo_escala": "NOTA_ESCALA"
+  "nota_campo_escala": "NOTA_ESCALA",
+  "grupos_competencias": [
+   {
+    "nombre": "Competencias organizacionales",
+    "items": [
+     "Comunicación Efectiva",
+     "Innovación y Mejora continua",
+     "Orientación al logro"
+    ]
+   },
+   {
+    "nombre": "Competencias administrativas",
+    "items": [
+     "Proactividad",
+     "Sentido de Urgencia"
+    ]
+   },
+   {
+    "nombre": "Competencias soporte",
+    "items": [
+     "Orientación a los procesos",
+     "Resilencia"
+    ]
+   },
+   {
+    "nombre": "Otras competencias",
+    "resto": true
+   }
+  ]
  },
  "empleados": [
   {

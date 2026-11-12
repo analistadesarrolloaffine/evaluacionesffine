@@ -7,6 +7,21 @@
 
 Cada usuario solo ve los datos de su empresa.
 
+## Personalización por cliente
+- Logo de cada empresa en el 9-Box, el dashboard y los PDF (`frontend/assets/kaika-logo.png`,
+  `frontend/assets/unigas-logo.png`; para los PDF van incrustados en `frontend/logos_data.js`).
+- Color principal: Kaika azul (#1226b5), Unigas naranja (#c95a14). Se cambia en `clients.js`.
+
+## Informe global de la compañía
+Botón "Descargar informe global" en el dashboard (`frontend/reporte_global.js`). Respeta los filtros
+de área y cargo. Incluye: indicadores generales, matriz 9-Box con conteos y %, distribución por eje,
+lectura ejecutiva, personas por área, competencias agrupadas, resultados por área, campana de
+competencias, análisis consolidado (texto del informe de cada cliente), plan de cierre de brechas,
+listado de personas por cuadrante y evaluaciones incompletas.
+El análisis consolidado sale de `frontend/analisis_data.js` (tomado de los Word
+"Informe consolidado de evaluación de desempeño" de KAIKA y UNIGAS). Solo se incluye en el
+informe sin filtros, porque el texto describe a toda la compañía.
+
 ## Cortes del 9-Box (ambos clientes)
 Sobre el puntaje en %: **bajo 0–16 · medio 16,1–84 · alto 84,1–100**, en ambos ejes.
 Se usan igual en el 9-Box, el dashboard, la campana y los PDF.
@@ -80,5 +95,8 @@ unigasfeecbak.xlsx y unigass_feedbac_actions.xlsx (retroalimentación y plan de 
 - **Potencial (eje Y) = Instrumento de Potencial**, calificado solo por el jefe (5 preguntas).
 - **Nota final** = 80% competencias + 20% potencial.
 - La columna PESOS de la matriz no se usa; mandan los pesos de arriba.
+- Dashboard: competencias agrupadas en organizacionales (Comunicación efectiva, Innovación y mejora
+  continua, Orientación al logro), administrativas (Proactividad, Sentido de urgencia) y soporte
+  (Orientación a los procesos, Resiliencia), según la columna COMPETENCIA del archivo.
 - 8 personas no tienen calificación completa y no se ubican en el 9-Box.
 - David Jose Sierra Ariza no está en la matriz: se le asignó el área de su jefe (Gestión Humana).

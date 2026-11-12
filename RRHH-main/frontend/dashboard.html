@@ -47,8 +47,7 @@ header {
 }
 .header-left { display: flex; align-items: center; gap: 14px; }
 .empresa-badge-img {
-  width: 34px; height: 34px; border-radius: 8px; object-fit: contain;
-  border: 1px solid var(--border); flex-shrink: 0;
+  height: 40px; width: auto; max-width: 160px; object-fit: contain; flex-shrink: 0; display: block;
 }
 .empresa-badge-initials {
   width: 34px; height: 34px; border-radius: 8px; background: var(--accent);
@@ -257,7 +256,7 @@ main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
 }
 .pdf-select:hover { border-color: var(--accent); }
 
-.btn-pdf-individual, .btn-pdf-masivo {
+.btn-pdf-individual, .btn-pdf-masivo, .btn-pdf-global {
   display: flex; align-items: center; gap: 7px;
   border: none; padding: 9px 16px; border-radius: 8px;
   font-family: 'Syne', sans-serif; font-size: 0.78rem; font-weight: 600;
@@ -272,7 +271,8 @@ main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
   background: #1b2a41;
   color: #fff; box-shadow: 0 4px 14px rgba(27,42,65,0.2);
 }
-.btn-pdf-individual:hover, .btn-pdf-masivo:hover { opacity:0.88; transform:translateY(-1px); }
+.btn-pdf-global { background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(27,42,65,0.18); }
+.btn-pdf-individual:hover, .btn-pdf-masivo:hover, .btn-pdf-global:hover { opacity:0.88; transform:translateY(-1px); }
 .btn-pdf-individual:disabled, .btn-pdf-masivo:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
 
 /* Barra de progreso */
@@ -364,6 +364,15 @@ main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
     </div>
     <div class="pdf-buttons">
       <div class="pdf-btn-group">
+        <span class="pdf-group-label">Informe global de la compañía</span>
+        <span class="pdf-group-sub">Resumen, 9-Box, competencias, áreas y listado por cuadrante</span>
+        <button class="btn-pdf-global" id="btn-pdf-global" onclick="descargarGlobal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Descargar informe global
+        </button>
+      </div>
+      <div class="pdf-divider"></div>
+      <div class="pdf-btn-group">
         <span class="pdf-group-label">Reporte individual</span>
         <select id="pdf-select-emp" class="pdf-select"><option value="">— Seleccionar empleado —</option></select>
         <button class="btn-pdf-individual" id="btn-pdf-ind" onclick="descargarIndividual()">
@@ -394,11 +403,17 @@ main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
 <script src="kaika_data.js"></script>
 <!-- Datos de evaluación UNIGAS -->
 <script src="unigas_data.js"></script>
+<!-- Logos de cada cliente para los PDF -->
+<script src="logos_data.js"></script>
 <!-- Datos reales de competencias individuales + tips de mejora -->
 <script src="competencias_data.js"></script>
 <!-- Retroalimentación 360 real (feedback de líderes/pares) -->
 <script src="feedback_data.js"></script>
 <script src="reporte_pdf.js"></script>
+<!-- Informe global de compañía -->
+<!-- Análisis consolidado de cada cliente (texto del informe) -->
+<script src="analisis_data.js"></script>
+<script src="reporte_global.js"></script>
 <script>
 /* ══════════════════════════════════════════
    CONFIG
@@ -837,6 +852,7 @@ function applyClientTheme(session) {
   }
 
   document.getElementById("empresa-sub").textContent = session.empresa + " · Evaluación de Talento";
+  window.CLIENTE_ACTUAL = session.clientId;
   document.getElementById("medicion-badge").textContent = session.medicion;
 
   const av = document.getElementById("user-avatar");
@@ -871,6 +887,7 @@ async function init() {
   if (local) {
     window.COMP_ESCALA_MAX = (local.reglas && local.reglas.comp_escala_max) || 4;
     window.REGLAS = local.reglas || null;
+    window.PENDIENTES = local.empleados.filter(e => !e.COMPLETO);
     todosEmpleados = local.empleados.filter(e => e.COMPLETO).map(e => ({
       ...e,
       COMPETENCIAS: (e.COMPETENCIAS||[]).map(c => ({ ...c, nivel: nivelCompetencia(c.puntaje), tip: tipCompetencia(c.nombre, c.puntaje) }))
@@ -969,6 +986,24 @@ function descargarIndividual() {
     btn.disabled = false;
     btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar PDF`;
   }, 100);
+}
+
+/* Informe global de la compañía (respeta los filtros de área y cargo) */
+function descargarGlobal() {
+  const lista = filtrados();
+  if (!lista.length) { alert("No hay empleados en el filtro actual."); return; }
+  const area  = document.getElementById("filtro-area").value;
+  const cargo = document.getElementById("filtro-cargo").value;
+  const filtro = [area && `Área ${area}`, cargo && `Cargo ${cargo}`].filter(Boolean).join(" · ");
+  const pend = (window.PENDIENTES || []).filter(e => (!area || e.AREA === area) && (!cargo || e.CARGO === cargo));
+  const btn = document.getElementById("btn-pdf-global");
+  btn.disabled = true;
+  setTimeout(() => {
+    const session = getSession();
+    try {
+      ReporteGlobal.generar(lista, { empresa: session?.empresa || "Empresa", medicion: session?.medicion || "", pendientes: pend, filtro, incluirAnalisis: !filtro });
+    } finally { btn.disabled = false; }
+  }, 80);
 }
 
 function descargarMasivo() {

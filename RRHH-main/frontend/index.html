@@ -50,8 +50,7 @@ header {
 
 /* empresa logo/badge en header */
 .empresa-badge-img {
-  width: 28px; height: 28px; border-radius: 6px; object-fit: contain;
-  border: 1px solid var(--border); flex-shrink: 0;
+  height: 40px; width: auto; max-width: 160px; object-fit: contain; flex-shrink: 0; display: block;
 }
 .empresa-badge-initials {
   width: 28px; height: 28px; border-radius: 6px; background: var(--accent);
@@ -351,6 +350,8 @@ header {
 <script src="kaika_data.js"></script>
 <!-- Datos de evaluación UNIGAS -->
 <script src="unigas_data.js"></script>
+<!-- Logos de cada cliente para los PDF -->
+<script src="logos_data.js"></script>
 <!-- Datos reales de competencias individuales + tips de mejora -->
 <script src="competencias_data.js"></script>
 <!-- Retroalimentación 360 real (feedback de líderes/pares) -->
@@ -927,6 +928,7 @@ function applyClientTheme(session) {
 
   /* Sub title */
   document.getElementById("empresa-sub").textContent = session.empresa + " · Evaluación de Talento";
+  window.CLIENTE_ACTUAL = session.clientId;
 
   /* User chip */
   const av = document.getElementById("user-avatar");
